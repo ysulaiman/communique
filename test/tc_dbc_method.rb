@@ -35,4 +35,20 @@ class TestDbcMethod < Test::Unit::TestCase
     @dbc_method.postcondition = "1 + 1 == 3"
     assert_equal false, @dbc_method.evaluate_postcondition
   end
+
+  def test_non_boolean_precondition_evaluates_to_false
+    @dbc_method.precondition = "42"
+    assert_equal false, @dbc_method.evaluate_precondition
+
+    @dbc_method.precondition = "nil"
+    assert_equal false, @dbc_method.evaluate_precondition
+  end
+
+  def test_non_boolean_postcondition_evaluates_to_false
+    @dbc_method.postcondition = "42"
+    assert_equal false, @dbc_method.evaluate_postcondition
+
+    @dbc_method.postcondition = "nil"
+    assert_equal false, @dbc_method.evaluate_postcondition
+  end
 end

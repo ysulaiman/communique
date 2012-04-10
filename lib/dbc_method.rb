@@ -6,10 +6,27 @@ class DbcMethod
   end
 
   def evaluate_precondition
-    eval self.precondition
+    evaluate_condition(:pre)
   end
 
   def evaluate_postcondition
-    eval self.postcondition
+    evaluate_condition(:post)
+  end
+
+  private
+
+  def evaluate_condition(type)
+    result = case type
+      when :pre
+        eval self.precondition
+      when :post
+        eval self.postcondition
+    end
+
+    if !!result == result   # If result itself is boolean
+      result
+    else
+      false
+    end
   end
 end
