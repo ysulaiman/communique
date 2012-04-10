@@ -51,4 +51,9 @@ class TestDbcMethod < Test::Unit::TestCase
     @dbc_method.postcondition = "nil"
     assert_equal false, @dbc_method.evaluate_postcondition
   end
+
+  def test_dbc_method_has_parameters
+    @dbc_method.parameters =[:param1, :param2, :param3]
+    assert_equal :param1, @dbc_method.parameters.first
+  end
 end

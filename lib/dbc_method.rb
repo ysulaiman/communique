@@ -1,5 +1,5 @@
 class DbcMethod
-  attr_accessor :name, :precondition, :postcondition
+  attr_accessor :name, :parameters, :precondition, :postcondition
 
   def initialize(name)
     self.name = name
