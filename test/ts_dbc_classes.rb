@@ -1,3 +1,3 @@
 require 'test/unit'
-require "#{File.dirname(__FILE__)}/tc_dbc_method"
-require "#{File.dirname(__FILE__)}/tc_dbc_class"
+require_relative 'tc_dbc_method'
+require_relative 'tc_dbc_class'
