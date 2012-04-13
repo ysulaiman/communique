@@ -2,7 +2,7 @@ class DbcMethod
   attr_accessor :name, :parameters, :precondition, :postcondition
 
   def initialize(name)
-    self.name = name
+    @name = name
   end
 
   def evaluate_precondition
