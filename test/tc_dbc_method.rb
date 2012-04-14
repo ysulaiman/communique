@@ -1,7 +1,7 @@
 require File.expand_path('../lib/dbc_method', File.dirname(__FILE__))
-require 'test/unit'
+require 'minitest/autorun'
 
-class TestDbcMethod < Test::Unit::TestCase
+class TestDbcMethod < MiniTest::Unit::TestCase
   def setup
     @dbc_method = DbcMethod.new "a_method"
   end

@@ -1,7 +1,7 @@
 require File.expand_path('../lib/dbc_class', File.dirname(__FILE__))
-require 'test/unit'
+require 'minitest/autorun'
 
-class TestDbcClass < Test::Unit::TestCase
+class TestDbcClass < MiniTest::Unit::TestCase
   def setup
     @dbc_class = DbcClass.new "AClass"
   end
