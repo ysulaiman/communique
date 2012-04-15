@@ -1,4 +1,4 @@
-require File.expand_path('../lib/dbc_method', File.dirname(__FILE__))
+require_relative '../lib/dbc_method'
 require 'minitest/autorun'
 
 class TestDbcMethod < MiniTest::Unit::TestCase
