@@ -4,4 +4,8 @@ class State
   def initialize(name)
     @name = name
   end
+
+  def satisfy?(condition)
+    condition.call
+  end
 end
