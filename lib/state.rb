@@ -1,7 +1,7 @@
 class State
-  attr_accessor :number, :variables
+  attr_accessor :name, :variables
 
-  def initialize(number)
-    @number = number
+  def initialize(name)
+    @name = name
   end
 end

@@ -7,7 +7,7 @@ class TestState < MiniTest::Unit::TestCase
   end
 
   def test_state_has_name
-    assert_equal 'S0', @state.number
+    assert_equal 'S0', @state.name
   end
 
   def test_state_has_variables
