@@ -1,4 +1,4 @@
-require File.expand_path('../lib/state', File.dirname(__FILE__))
+require_relative '../lib/state'
 require 'minitest/autorun'
 
 class TestState < MiniTest::Unit::TestCase
