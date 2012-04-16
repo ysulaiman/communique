@@ -1,8 +1,8 @@
-class State
-  attr_accessor :name, :variables
+require 'ostruct'
 
+class State < OpenStruct
   def initialize(name)
-    @name = name
+    super({name: name})
   end
 
   def satisfy?(condition)

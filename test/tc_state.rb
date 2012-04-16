@@ -10,12 +10,14 @@ class TestState < MiniTest::Unit::TestCase
     assert_equal 'S0', @state.name
   end
 
-  def test_state_has_variables
-    @state.variables = {x: 13, y: 42, z: false}
+  def test_state_has_arbitrary_variables
+    @state.x = 13
+    @state.y = 42
+    @state.z = false
 
-    assert_equal 13, @state.variables[:x]
-    assert_equal 42, @state.variables[:y]
-    assert_equal false, @state.variables[:z]
+    assert_equal 13, @state.x
+    assert_equal 42, @state.y
+    assert_equal false, @state.z
   end
 
   def test_can_check_if_it_satisfies_condition
