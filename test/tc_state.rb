@@ -20,11 +20,22 @@ class TestState < MiniTest::Unit::TestCase
     assert_equal false, @state.z
   end
 
-  def test_can_check_if_it_satisfies_condition
-    condition = -> { true }
-    assert_equal true, @state.satisfy?(condition)
+  def test_can_check_if_it_satisfies_simple_conditions
+    assert_equal true, @state.satisfy? { true }
 
-    condition = -> { false }
-    assert_equal false, @state.satisfy?(condition)
+    condition = Proc.new { false }
+    assert_equal false, @state.satisfy?(&condition)
+
+    @state.is_working = true
+    assert_equal true, @state.satisfy? { is_working }
+  end
+
+  def test_can_check_if_it_satisfies_complex_conditions
+    @state.x, @state.y = 42, 99
+    assert_equal true, @state.satisfy? { x == 42 and y > x }
+  end
+
+  def test_does_not_satisfy_conditions_comparing_nonexistent_state_variables
+    assert_equal false, @state.satisfy? { nonexistent_state_variable == 42 }
   end
 end

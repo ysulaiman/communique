@@ -5,7 +5,7 @@ class State < OpenStruct
     super({name: name})
   end
 
-  def satisfy?(condition)
-    condition.call
+  def satisfy?(&condition)
+    instance_eval &condition
   end
 end
