@@ -21,4 +21,9 @@ class TestAction < MiniTest::Unit::TestCase
     @action.precondition = -> { true }
     assert_equal true, @action.precondition.call
   end
+
+  def test_has_callable_effects
+    @action.effect = -> { x = 42 }
+    assert_equal 42, @action.effect.call
+  end
 end
