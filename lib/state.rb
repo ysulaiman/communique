@@ -5,6 +5,10 @@ class State < OpenStruct
     super({name: name})
   end
 
+  def apply(&effect)
+    instance_eval &effect
+  end
+
   def satisfy?(&condition)
     instance_eval &condition
   end

@@ -38,4 +38,30 @@ class TestState < MiniTest::Unit::TestCase
   def test_does_not_satisfy_conditions_comparing_nonexistent_state_variables
     assert_equal false, @state.satisfy? { nonexistent_state_variable == 42 }
   end
+
+  def test_can_apply_simple_effects_to_itself
+    @state.x = 42
+    @state.apply { |s| s.x += 1 }
+
+    assert_equal 43, @state.x
+  end
+
+  def test_can_apply_more_complex_effects_to_itself
+    @state.username = 'user'
+    @state.password = 'pass'
+    @state.age = 42
+    @state.logged_in = true
+
+    @state.apply do |s|
+      s.username = 'john'
+      s.password = 'secret'
+      s.age = 99
+      s.logged_in = false
+    end
+
+    assert_equal 'john', @state.username
+    assert_equal 'secret', @state.password
+    assert_equal 99, @state.age
+    assert_equal false, @state.logged_in
+  end
 end
