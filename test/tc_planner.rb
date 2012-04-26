@@ -38,4 +38,61 @@ class TestPlanner < MiniTest::Unit::TestCase
     @planner.solve
     assert_equal 'change_x_from_42_to_43', @planner.plan
   end
+
+  def test_solves_trivial_problem_involving_multiple_actions_with_parameters
+    @planner.initial_state.username = 'john'
+    @planner.initial_state.password = 'secret'
+    @planner.initial_state.logged_in = false
+    @planner.goal = Proc.new { logged_in }
+
+    log_in = Action.new
+    log_in.name = 'log_in'
+    log_in.parameters = {username: 'john', password: 'secret'}
+    log_in.precondition = Proc.new { log_in.parameters[:username] == username \
+      && log_in.parameters[:password] == password && !logged_in }
+    log_in.effect = Proc.new { |state| state.logged_in = true }
+    @planner.actions << log_in
+
+    log_out = Action.new
+    log_out.name = 'log_out'
+    log_out.precondition = Proc.new { logged_in }
+    log_out.effect = Proc.new { |state| state.logged_in = false }
+    @planner.actions << log_out
+
+    @planner.solve
+    assert_equal 'log_in', @planner.plan
+  end
+
+  def test_solves_non_trivial_problem
+    @planner.initial_state.logged_in = false
+    @planner.initial_state.activated = false
+    @planner.goal = Proc.new { activated && !logged_in}
+
+    log_in = Action.new
+    log_in.name = 'log_in'
+    log_in.precondition = Proc.new { !logged_in }
+    log_in.effect = Proc.new { |state| state.logged_in = true }
+    @planner.actions << log_in
+
+    log_out = Action.new
+    log_out.name = 'log_out'
+    log_out.precondition = Proc.new { logged_in }
+    log_out.effect = Proc.new { |state| state.logged_in = false }
+    @planner.actions << log_out
+
+    activate = Action.new
+    activate.name = 'activate'
+    activate.precondition = Proc.new { logged_in && !activated }
+    activate.effect = Proc.new { |state| state.activated = true }
+    @planner.actions << activate
+
+    deactivate = Action.new
+    deactivate.name = 'deactivate'
+    deactivate.precondition = Proc.new { logged_in && activated }
+    deactivate.effect = Proc.new { |state| state.activated = false }
+    @planner.actions << deactivate
+
+    @planner.solve
+    assert_match /log_in;.* activate;.* log_out/, @planner.plan
+  end
 end

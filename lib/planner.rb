@@ -9,26 +9,37 @@ class Planner
   end
 
   def solve
-    applicable_action = find_applicable_action
-    execute(applicable_action)
-    @plan << applicable_action if goal_is_satisfied?
+    @plan = forward_search
   end
 
   def plan
-    @plan.collect { |action| action.name }.join(' ')
+    @plan.collect { |action| action.name }.join('; ')
   end
 
   private
 
-  def find_applicable_action
-    @actions.find { |action| @initial_state.satisfy?(&action.precondition) }
+  def forward_search
+    state = @initial_state
+    plan = []
+
+    loop do
+      return plan if state.satisfy?(&@goal)
+
+      applicable_actions = find_applicable_actions(state)
+      return :failure if applicable_actions.empty?
+
+      action = applicable_actions.sample
+      state = execute(state, action)
+      plan << action
+    end
   end
 
-  def execute(action)
-    @initial_state.apply(&action.effect)
+  def find_applicable_actions(state)
+    @actions.find_all { |action| state.satisfy?(&action.precondition) }
   end
 
-  def goal_is_satisfied?
-    @initial_state.satisfy?(&@goal)
+  def execute(state, action)
+    state.apply(&action.effect)
+    state
   end
 end
