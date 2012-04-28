@@ -16,9 +16,9 @@ class TestPlanner < MiniTest::Unit::TestCase
   end
 
   def test_accepts_actions
-    a = Action.new
-    b = Action.new
-    c = Action.new
+    a = Action.new('a')
+    b = Action.new('b')
+    c = Action.new('c')
     @planner.actions = [a, b, c]
 
     assert_equal a, @planner.actions.first
@@ -29,8 +29,7 @@ class TestPlanner < MiniTest::Unit::TestCase
     @planner.initial_state.x = 42
     @planner.goal = Proc.new { x == 43 }
 
-    action = Action.new
-    action.name = 'change_x_from_42_to_43'
+    action = Action.new('change_x_from_42_to_43')
     action.precondition = Proc.new { x == 42 }
     action.effect = Proc.new { |state| state.x = 43 }
     @planner.actions = [action]
@@ -45,16 +44,14 @@ class TestPlanner < MiniTest::Unit::TestCase
     @planner.initial_state.logged_in = false
     @planner.goal = Proc.new { logged_in }
 
-    log_in = Action.new
-    log_in.name = 'log_in'
+    log_in = Action.new('log_in')
     log_in.parameters = {username: 'john', password: 'secret'}
     log_in.precondition = Proc.new { log_in.parameters[:username] == username \
       && log_in.parameters[:password] == password && !logged_in }
     log_in.effect = Proc.new { |state| state.logged_in = true }
     @planner.actions << log_in
 
-    log_out = Action.new
-    log_out.name = 'log_out'
+    log_out = Action.new('log_out')
     log_out.precondition = Proc.new { logged_in }
     log_out.effect = Proc.new { |state| state.logged_in = false }
     @planner.actions << log_out
@@ -68,26 +65,22 @@ class TestPlanner < MiniTest::Unit::TestCase
     @planner.initial_state.activated = false
     @planner.goal = Proc.new { activated && !logged_in}
 
-    log_in = Action.new
-    log_in.name = 'log_in'
+    log_in = Action.new('log_in')
     log_in.precondition = Proc.new { !logged_in }
     log_in.effect = Proc.new { |state| state.logged_in = true }
     @planner.actions << log_in
 
-    log_out = Action.new
-    log_out.name = 'log_out'
+    log_out = Action.new('log_out')
     log_out.precondition = Proc.new { logged_in }
     log_out.effect = Proc.new { |state| state.logged_in = false }
     @planner.actions << log_out
 
-    activate = Action.new
-    activate.name = 'activate'
+    activate = Action.new('activate')
     activate.precondition = Proc.new { logged_in && !activated }
     activate.effect = Proc.new { |state| state.activated = true }
     @planner.actions << activate
 
-    deactivate = Action.new
-    deactivate.name = 'deactivate'
+    deactivate = Action.new('deactivate')
     deactivate.precondition = Proc.new { logged_in && activated }
     deactivate.effect = Proc.new { |state| state.activated = false }
     @planner.actions << deactivate
