@@ -4,6 +4,22 @@ require 'minitest/autorun'
 class TestPlanner < MiniTest::Unit::TestCase
   def setup
     @planner = Planner.new
+
+    @parameterless_log_in = DbcMethod.new('log_in')
+    @parameterless_log_in.precondition = Proc.new { !logged_in }
+    @parameterless_log_in.effect = Proc.new { |state| state.logged_in = true }
+
+    @log_out = DbcMethod.new('log_out')
+    @log_out.precondition = Proc.new { logged_in }
+    @log_out.effect = Proc.new { |state| state.logged_in = false }
+
+    @activate = DbcMethod.new('activate')
+    @activate.precondition = Proc.new { logged_in && !activated }
+    @activate.effect = Proc.new { |state| state.activated = true }
+
+    @deactivate = DbcMethod.new('deactivate')
+    @deactivate.precondition = Proc.new { logged_in && activated }
+    @deactivate.effect = Proc.new { |state| state.activated = false }
   end
 
   def test_has_initial_state
@@ -51,10 +67,7 @@ class TestPlanner < MiniTest::Unit::TestCase
     log_in.effect = Proc.new { |state| state.logged_in = true }
     @planner.actions << log_in
 
-    log_out = DbcMethod.new('log_out')
-    log_out.precondition = Proc.new { logged_in }
-    log_out.effect = Proc.new { |state| state.logged_in = false }
-    @planner.actions << log_out
+    @planner.actions << @log_out
 
     @planner.solve
     assert_equal 'log_in', @planner.plan
@@ -65,25 +78,7 @@ class TestPlanner < MiniTest::Unit::TestCase
     @planner.initial_state.activated = false
     @planner.goal = Proc.new { activated && !logged_in}
 
-    log_in = DbcMethod.new('log_in')
-    log_in.precondition = Proc.new { !logged_in }
-    log_in.effect = Proc.new { |state| state.logged_in = true }
-    @planner.actions << log_in
-
-    log_out = DbcMethod.new('log_out')
-    log_out.precondition = Proc.new { logged_in }
-    log_out.effect = Proc.new { |state| state.logged_in = false }
-    @planner.actions << log_out
-
-    activate = DbcMethod.new('activate')
-    activate.precondition = Proc.new { logged_in && !activated }
-    activate.effect = Proc.new { |state| state.activated = true }
-    @planner.actions << activate
-
-    deactivate = DbcMethod.new('deactivate')
-    deactivate.precondition = Proc.new { logged_in && activated }
-    deactivate.effect = Proc.new { |state| state.activated = false }
-    @planner.actions << deactivate
+    @planner.actions << @parameterless_log_in << @log_out << @activate << @deactivate
 
     @planner.solve
     assert_match /log_in;.* activate;.* log_out/, @planner.plan
