@@ -1,4 +1,5 @@
 require_relative '../lib/planner'
+require_relative '../lib/dbc_use_case'
 require 'minitest/autorun'
 
 class TestPlanner < MiniTest::Unit::TestCase
@@ -82,5 +83,16 @@ class TestPlanner < MiniTest::Unit::TestCase
 
     @planner.solve
     assert_match /log_in;.* activate;.* log_out/, @planner.plan
+  end
+
+  def test_can_use_dbc_use_case_to_set_up_initial_state
+    use_case = DbcUseCase.new('Login')
+    use_case.precondition = Proc.new do |state|
+      state.username = 'john'
+      state.password = 'secret'
+    end
+
+    @planner.set_up_initial_state(use_case)
+    assert @planner.initial_state.satisfy? { username == 'john' && password == 'secret' }
   end
 end

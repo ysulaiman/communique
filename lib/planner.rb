@@ -8,6 +8,10 @@ class Planner
     @plan = []
   end
 
+  def set_up_initial_state(use_case)
+    @initial_state.apply(&use_case.precondition)
+  end
+
   def solve
     @plan = forward_search
   end
