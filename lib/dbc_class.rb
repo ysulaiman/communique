@@ -1,11 +1,9 @@
 class DbcClass
-  attr_accessor :name, :invariant
+  attr_accessor :name, :attributes, :dbc_methods, :invariant
 
   def initialize(name)
-    self.name = name
-  end
-
-  def evaluate_invariant
-    eval self.invariant
+    @name = name
+    @attributes = []
+    @dbc_methods = []
   end
 end
