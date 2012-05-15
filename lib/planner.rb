@@ -1,3 +1,5 @@
+require_relative 'state'
+
 class Planner
   attr_reader :initial_state, :plan
   attr_accessor :actions, :goal
