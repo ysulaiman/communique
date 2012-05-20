@@ -6,7 +6,6 @@ class Planner
 
   def initialize
     @initial_state = State.new('S0')
-    @actions = []
     @plan = []
     @dbc_classes = []
   end
@@ -16,13 +15,11 @@ class Planner
   end
 
   def solve
-    @actions = @dbc_classes.collect { |c| c.dbc_methods}.flatten
-
     @plan = forward_search
   end
 
   def plan
-    @plan.collect { |action| action.name }.join('; ')
+    @plan.collect { |method| method.name }.join('; ')
   end
 
   private
@@ -34,21 +31,22 @@ class Planner
     loop do
       return plan if state.satisfy?(&@goal)
 
-      applicable_actions = find_applicable_actions(state)
-      return :failure if applicable_actions.empty?
+      applicable_methods = find_applicable_methods(state)
+      return :failure if applicable_methods.empty?
 
-      action = applicable_actions.sample
-      state = execute(state, action)
-      plan << action
+      method = applicable_methods.sample
+      state = execute(state, method)
+      plan << method
     end
   end
 
-  def find_applicable_actions(state)
-    @actions.find_all { |action| state.satisfy?(&action.precondition) }
+  def find_applicable_methods(state)
+    all_methods = @dbc_classes.collect { |c| c.dbc_methods }.flatten
+    all_methods.find_all { |m| state.satisfy?(&m.precondition) }
   end
 
-  def execute(state, action)
-    state.apply(&action.effect)
+  def execute(state, method)
+    state.apply(&method.effect)
     state
   end
 end
