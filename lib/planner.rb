@@ -2,12 +2,13 @@ require_relative 'state'
 
 class Planner
   attr_reader :initial_state, :plan
-  attr_accessor :actions, :goal
+  attr_accessor :dbc_classes, :goal
 
   def initialize
     @initial_state = State.new('S0')
     @actions = []
     @plan = []
+    @dbc_classes = []
   end
 
   def set_up_initial_state(use_case)
@@ -15,6 +16,8 @@ class Planner
   end
 
   def solve
+    @actions = @dbc_classes.collect { |c| c.dbc_methods}.flatten
+
     @plan = forward_search
   end
 

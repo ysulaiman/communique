@@ -23,7 +23,7 @@ class TestPlanner < MiniTest::Unit::TestCase
     @deactivate.effect = Proc.new { |state| state.activated = false }
   end
 
-  def test_has_initial_state
+  def test_has_accessible_initial_state
     @planner.initial_state.x = 42
     assert_equal 42, @planner.initial_state.x
   end
@@ -32,24 +32,23 @@ class TestPlanner < MiniTest::Unit::TestCase
     @planner.goal = Proc.new { x == 43 }
   end
 
-  def test_accepts_actions
-    a = DbcMethod.new('a')
-    b = DbcMethod.new('b')
-    c = DbcMethod.new('c')
-    @planner.actions = [a, b, c]
-
-    assert_equal a, @planner.actions.first
-    assert_equal c, @planner.actions.last
+  def test_has_accessible_dbc_classes
+    assert_respond_to @planner, :dbc_classes
+    assert_respond_to @planner, :dbc_classes=
   end
 
   def test_solves_trivial_problem
     @planner.initial_state.x = 42
     @planner.goal = Proc.new { x == 43 }
 
-    action = DbcMethod.new('change_x_from_42_to_43')
-    action.precondition = Proc.new { x == 42 }
-    action.effect = Proc.new { |state| state.x = 43 }
-    @planner.actions = [action]
+    method = DbcMethod.new('change_x_from_42_to_43')
+    method.precondition = Proc.new { x == 42 }
+    method.effect = Proc.new { |state| state.x = 43 }
+
+    @dbc_class = DbcClass.new('Changer')
+    @dbc_class.dbc_methods << method
+
+    @planner.dbc_classes << @dbc_class
 
     @planner.solve
     assert_equal 'change_x_from_42_to_43', @planner.plan
@@ -66,9 +65,11 @@ class TestPlanner < MiniTest::Unit::TestCase
     log_in.precondition = Proc.new { log_in.parameters[:username] == username \
       && log_in.parameters[:password] == password && !logged_in }
     log_in.effect = Proc.new { |state| state.logged_in = true }
-    @planner.actions << log_in
 
-    @planner.actions << @log_out
+    @dbc_class = DbcClass.new('User')
+    @dbc_class.dbc_methods << log_in << @log_out
+
+    @planner.dbc_classes << @dbc_class
 
     @planner.solve
     assert_equal 'log_in', @planner.plan
@@ -79,7 +80,10 @@ class TestPlanner < MiniTest::Unit::TestCase
     @planner.initial_state.activated = false
     @planner.goal = Proc.new { activated && !logged_in}
 
-    @planner.actions << @parameterless_log_in << @log_out << @activate << @deactivate
+    @user_dbc_class = DbcClass.new('User')
+    @user_dbc_class.dbc_methods << @parameterless_log_in << @log_out << @activate << @deactivate
+
+    @planner.dbc_classes << @user_dbc_class
 
     @planner.solve
     assert_match /log_in;.* activate;.* log_out/, @planner.plan
