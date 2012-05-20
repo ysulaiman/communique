@@ -20,13 +20,13 @@ class TestDbcMethod < MiniTest::Unit::TestCase
     assert_equal 42, @dbc_method.parameters[:y]
   end
 
-  def test_has_callable_percondition
-    @dbc_method.precondition = -> { true }
-    assert_equal true, @dbc_method.precondition.call
+  def test_has_accessible_percondition
+    assert_respond_to @dbc_method, :precondition
+    assert_respond_to @dbc_method, :precondition=
   end
 
-  def test_has_callable_postcondition
-    @dbc_method.postcondition = -> { x = 42 }
-    assert_equal 42, @dbc_method.postcondition.call
+  def test_has_accessible_postcondition
+    assert_respond_to @dbc_method, :postcondition
+    assert_respond_to @dbc_method, :postcondition=
   end
 end
