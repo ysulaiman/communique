@@ -10,7 +10,7 @@ class TestDbcClass < MiniTest::Unit::TestCase
     assert_equal 'AClass', @dbc_class.name
   end
 
-  def test_has_attributes
+  def test_has_accessible_attributes
     assert_respond_to @dbc_class, :attributes
     assert_respond_to @dbc_class, :attributes=
   end
@@ -19,7 +19,7 @@ class TestDbcClass < MiniTest::Unit::TestCase
     assert @dbc_class.attributes.empty?
   end
 
-  def test_has_dbc_methods
+  def test_has_accessible_dbc_methods
     assert_respond_to @dbc_class, :dbc_methods
     assert_respond_to @dbc_class, :dbc_methods=
   end
@@ -28,7 +28,7 @@ class TestDbcClass < MiniTest::Unit::TestCase
     assert @dbc_class.dbc_methods.empty?
   end
 
-  def test_has_invariant
+  def test_has_accessible_invariant
     assert_respond_to @dbc_class, :invariant
     assert_respond_to @dbc_class, :invariant=
   end
