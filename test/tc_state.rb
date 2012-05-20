@@ -6,18 +6,19 @@ class TestState < MiniTest::Unit::TestCase
     @state = State.new('S0')
   end
 
-  def test_state_has_name
+  def test_has_name
     assert_equal 'S0', @state.name
   end
 
-  def test_state_has_arbitrary_variables
-    @state.x = 13
-    @state.y = 42
-    @state.z = false
+  def test_has_arbitrary_variables
+    @state.the_answer = 42
+    @state.untrue = false
+    @state.greek_letters = [:alpha, :beta]
+    @state.greek_letters.push(:gamma)
 
-    assert_equal 13, @state.x
-    assert_equal 42, @state.y
-    assert_equal false, @state.z
+    assert_equal 42, @state.the_answer
+    assert_equal false, @state.untrue
+    assert_equal [:alpha, :beta, :gamma], @state.greek_letters
   end
 
   def test_can_check_if_it_satisfies_simple_conditions
@@ -30,9 +31,12 @@ class TestState < MiniTest::Unit::TestCase
     assert_equal true, @state.satisfy? { is_working }
   end
 
-  def test_can_check_if_it_satisfies_complex_conditions
+  def test_can_check_if_it_satisfies_more_complex_conditions
     @state.x, @state.y = 42, 99
     assert_equal true, @state.satisfy? { x == 42 and y > x }
+
+    @state.greek_letters = [:alpha, :beta, :gamma]
+    assert_equal false, @state.satisfy? { greek_letters.include? :aleph }
   end
 
   def test_does_not_satisfy_conditions_comparing_nonexistent_state_variables
