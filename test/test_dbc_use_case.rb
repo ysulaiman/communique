@@ -1,5 +1,4 @@
-require_relative '../lib/dbc_use_case'
-require 'minitest/autorun'
+require_relative 'test_helpers'
 
 class TestDbcUseCase < MiniTest::Unit::TestCase
   def setup

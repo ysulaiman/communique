@@ -1,6 +1,4 @@
-require_relative '../lib/planner'
-require_relative '../lib/dbc_use_case'
-require 'minitest/autorun'
+require_relative 'test_helpers'
 
 class TestPlanner < MiniTest::Unit::TestCase
   def setup

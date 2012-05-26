@@ -1,5 +1,4 @@
-require_relative '../lib/state'
-require 'minitest/autorun'
+require_relative 'test_helpers'
 
 class TestState < MiniTest::Unit::TestCase
   def setup
