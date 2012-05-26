@@ -49,7 +49,7 @@ class TestPlanner < MiniTest::Unit::TestCase
     @planner.dbc_classes << @dbc_class
 
     @planner.solve
-    assert_equal 'change_x_from_42_to_43', @planner.plan
+    assert_equal 'changer.change_x_from_42_to_43()', @planner.plan
   end
 
   def test_solves_trivial_problem_involving_multiple_actions_with_parameters
@@ -70,7 +70,7 @@ class TestPlanner < MiniTest::Unit::TestCase
     @planner.dbc_classes << @dbc_class
 
     @planner.solve
-    assert_equal 'log_in', @planner.plan
+    assert_equal 'user.log_in(username, password)', @planner.plan
   end
 
   def test_solves_non_trivial_problem
@@ -84,7 +84,7 @@ class TestPlanner < MiniTest::Unit::TestCase
     @planner.dbc_classes << @user_dbc_class
 
     @planner.solve
-    assert_match /log_in;.* activate;.* log_out/, @planner.plan
+    assert_match /user.log_in\(\);.* user.activate\(\);.* user.log_out\(\)/, @planner.plan
   end
 
   def test_can_use_dbc_use_case_to_set_up_initial_state

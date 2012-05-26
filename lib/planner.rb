@@ -19,7 +19,7 @@ class Planner
   end
 
   def plan
-    @plan.collect { |method| method.name }.join('; ')
+    @plan.collect { |method| create_sequence_diagram_ready_string(method) }.join('; ')
   end
 
   private
@@ -48,5 +48,13 @@ class Planner
   def execute(state, method)
     state.apply(&method.effect)
     state
+  end
+
+  def create_sequence_diagram_ready_string(method)
+    # TODO: This method owner finding hack is potentially costly. Change it
+    # when it starts to hurt.
+    method_owner = @dbc_classes.find { |c| c.dbc_methods.include?(method) }
+
+    "#{method_owner.name.downcase}.#{method.name}(#{method.parameters.keys.join(', ')})"
   end
 end
