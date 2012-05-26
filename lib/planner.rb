@@ -1,7 +1,7 @@
 require_relative 'state'
 
 class Planner
-  attr_reader :initial_state, :plan
+  attr_reader :initial_state
   attr_accessor :dbc_classes, :goal
 
   def initialize
