@@ -2,12 +2,11 @@ require_relative 'state'
 
 class Planner
   attr_reader :initial_state
-  attr_accessor :dbc_classes, :goal
+  attr_accessor :goal
 
   def initialize
     @initial_state = State.new('S0')
     @plan = []
-    @dbc_classes = []
   end
 
   def set_up_initial_state(use_case)
@@ -15,6 +14,8 @@ class Planner
   end
 
   def solve
+    @dbc_methods = @initial_state.get_dbc_methods_of_instances
+
     @plan = forward_search
   end
 
@@ -41,20 +42,15 @@ class Planner
   end
 
   def find_applicable_methods(state)
-    all_methods = @dbc_classes.collect { |c| c.dbc_methods }.flatten
-    all_methods.find_all { |m| state.satisfy?(&m.precondition) }
+    @dbc_methods.find_all { |m| state.satisfy?(&m.precondition) }
   end
 
   def execute(state, method)
-    state.apply(&method.effect)
+    state.apply(method.receiver_name, &method.effect)
     state
   end
 
   def create_sequence_diagram_ready_string(method)
-    # TODO: This method owner finding hack is potentially costly. Change it
-    # when it starts to hurt.
-    method_owner = @dbc_classes.find { |c| c.dbc_methods.include?(method) }
-
-    "#{method_owner.name.downcase}.#{method.name}(#{method.parameters.keys.join(', ')})"
+    "#{method.receiver_name.downcase}.#{method.name}(#{method.parameters.keys.join(', ')})"
   end
 end
