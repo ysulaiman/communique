@@ -28,4 +28,9 @@ class TestDbcMethod < MiniTest::Unit::TestCase
     assert_respond_to @dbc_method, :postcondition
     assert_respond_to @dbc_method, :postcondition=
   end
+
+  def test_has_accessible_receiver_name
+    assert_respond_to @dbc_method, :receiver_name
+    assert_respond_to @dbc_method, :receiver_name=
+  end
 end

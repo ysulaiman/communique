@@ -1,5 +1,5 @@
 class DbcMethod
-  attr_accessor :name, :parameters, :precondition, :postcondition
+  attr_accessor :name, :parameters, :precondition, :postcondition, :receiver_name
 
   alias_method :effect, :postcondition
   alias_method :effect=, :postcondition=
