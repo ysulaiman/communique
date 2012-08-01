@@ -5,8 +5,9 @@ class DbcObject
     @dbc_name = dbc_name
     @dbc_class = dbc_class
     @dbc_methods = []
-    initialize_dbc_instance_variables(dbc_instance_variables)
-    define_singleton_attribute_accessors(dbc_instance_variables.keys)
+    @dbc_instance_variables = dbc_instance_variables
+    initialize_dbc_instance_variables
+    define_singleton_attribute_accessors(@dbc_instance_variables.keys)
   end
 
   def satisfy?(&condition)
@@ -22,12 +23,22 @@ class DbcObject
     method.receiver_name = @dbc_name
   end
 
+  def reset_instance_variables
+    initialize_dbc_instance_variables
+    reset_instance_variables_that_are_dbc_objects
+  end
+
   private
 
-  def initialize_dbc_instance_variables(dbc_instance_variables)
-    dbc_instance_variables.each do |name, value|
+  def initialize_dbc_instance_variables
+    @dbc_instance_variables.each do |name, value|
       instance_variable_set(name, value)
     end
+  end
+
+  def reset_instance_variables_that_are_dbc_objects
+    dbc_objects = @dbc_instance_variables.select { |k, v| v.is_a? DbcObject }
+    dbc_objects.each_value { |dbc_object| dbc_object.reset_instance_variables }
   end
 
   def define_singleton_attribute_accessors(dbc_instance_variables_names)

@@ -60,4 +60,22 @@ class TestDbcObject < MiniTest::Unit::TestCase
     refute_respond_to bar_instance, :foo
     refute_respond_to bar_instance, :foo=
   end
+
+  def test_can_reset_its_instance_variables_to_their_initial_values
+    @dbc_object.number = 666
+    @dbc_object.reset_instance_variables
+
+    assert_equal 42, @dbc_object.number
+  end
+
+  def test_reset_its_dbc_objects_in_the_process_of_resetting_itself
+    foo_instance = DbcObject.new('foo', :Foo, {:@number => 42})
+    bar_instance = DbcObject.new('bar', :Bar, {:@foo => foo_instance})
+
+    bar_instance.foo.number = 666
+    bar_instance.reset_instance_variables
+
+    assert_equal 42, bar_instance.foo.number
+    assert_equal 42, foo_instance.number
+  end
 end
