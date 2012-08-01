@@ -8,8 +8,8 @@ class State
     @dbc_objects = dbc_objects.to_set
   end
 
-  def add(dbc_object)
-    @dbc_objects.add(dbc_object)
+  def add(*dbc_objects)
+    @dbc_objects.merge(dbc_objects)
   end
 
   def satisfy?(&condition)

@@ -20,6 +20,17 @@ class TestState < MiniTest::Unit::TestCase
     assert_equal true, @state.include_instance_of?(:Foo)
   end
 
+  def test_can_add_multiple_dbc_object_to_itself_in_one_call
+    foo = DbcObject.new('foo', :Foo, {})
+    bar = DbcObject.new('bar', :Bar, {})
+    baz = DbcObject.new('baz', :Baz, {})
+    @state.add(foo, bar, baz)
+
+    assert @state.include_instance_of?(:Foo) &&
+      @state.include_instance_of?(:Bar) &&
+      @state.include_instance_of?(:Baz)
+  end
+
   def test_can_check_if_it_satisfies_conditions
     assert_equal true, @state.satisfy? { @number == 42 }
   end
