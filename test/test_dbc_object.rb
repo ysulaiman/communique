@@ -28,15 +28,28 @@ class TestDbcObject < MiniTest::Unit::TestCase
   end
 
   def test_can_add_dbc_methods_to_itself
-    @dbc_object.add_dbc_method(@dbc_method)
+    @dbc_object.add_dbc_methods(@dbc_method)
 
     assert_equal 'dbc_method', @dbc_object.dbc_methods.first.name
   end
 
   def test_set_receiver_name_of_dbc_methods_when_they_get_added
-    @dbc_object.add_dbc_method(@dbc_method)
+    @dbc_object.add_dbc_methods(@dbc_method)
 
     assert_equal 'account_instance', @dbc_method.receiver_name
+  end
+
+  def test_can_add_multiple_dbc_methods_and_set_their_names_in_one_call
+    m1 = DbcMethod.new('m1')
+    m2 = DbcMethod.new('m2')
+    m3 = DbcMethod.new('m3')
+    @dbc_object.add_dbc_methods(m1, m2, m3)
+
+    assert_equal 3, @dbc_object.dbc_methods.size
+
+    assert_equal 'account_instance', m1.receiver_name
+    assert_equal 'account_instance', m2.receiver_name
+    assert_equal 'account_instance', m3.receiver_name
   end
 
   def test_has_accessors_for_its_instance_variables

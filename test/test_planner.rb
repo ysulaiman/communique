@@ -37,7 +37,7 @@ class TestPlanner < MiniTest::Unit::TestCase
     method.precondition = Proc.new { @value == 42 }
     method.effect = Proc.new { @value = 43 }
 
-    counter_instance.add_dbc_method(method)
+    counter_instance.add_dbc_methods(method)
 
     @planner.initial_state.add(counter_instance)
     @planner.goal = Proc.new { @value == 43 }
@@ -55,15 +55,14 @@ class TestPlanner < MiniTest::Unit::TestCase
 
     log_in = DbcMethod.new('log_in')
     log_in.parameters = {username: 'john', password: 'secret'}
-    log_in.precondition = Proc.new {
+    log_in.precondition = Proc.new do
       log_in.parameters[:username] == @username &&
       log_in.parameters[:password] == @password &&
       !@logged_in
-    }
+    end
     log_in.effect = Proc.new { @logged_in = true }
 
-    user_instance.add_dbc_method(log_in)
-    user_instance.add_dbc_method(@log_out)
+    user_instance.add_dbc_methods(log_in, @log_out)
 
     @planner.initial_state.add(user_instance)
     @planner.goal = Proc.new { @logged_in }
@@ -78,10 +77,7 @@ class TestPlanner < MiniTest::Unit::TestCase
       :@activated => false
     })
 
-    user_instance.add_dbc_method(@parameterless_log_in)
-    user_instance.add_dbc_method(@log_out)
-    user_instance.add_dbc_method(@activate)
-    user_instance.add_dbc_method(@deactivate)
+    user_instance.add_dbc_methods(@parameterless_log_in, @log_out, @activate, @deactivate)
 
     @planner.initial_state.add(user_instance)
     @planner.goal = Proc.new { @activated && !@logged_in}

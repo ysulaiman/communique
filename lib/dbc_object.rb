@@ -18,9 +18,9 @@ class DbcObject
     instance_eval(&postcondition)
   end
 
-  def add_dbc_method(method)
-    @dbc_methods << method
-    method.receiver_name = @dbc_name
+  def add_dbc_methods(*methods)
+    @dbc_methods.concat(methods)
+    methods.each { |m| m.receiver_name = @dbc_name }
   end
 
   def reset_instance_variables
