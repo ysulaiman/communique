@@ -87,14 +87,14 @@ class TestPlanner < MiniTest::Unit::TestCase
   end
 
   def test_can_use_dbc_use_case_to_set_up_initial_state
-    skip('Need to figure out how use cases fit in the new picture of State')
+    user_instance = DbcObject.new('user', :User, {
+      :@username => 'john',
+      :@password => 'secret'
+    })
     use_case = DbcUseCase.new('Login')
-    use_case.precondition = Proc.new do |state|
-      state.username = 'john'
-      state.password = 'secret'
-    end
+    use_case.dbc_instances << user_instance
 
     @planner.set_up_initial_state(use_case)
-    assert @planner.initial_state.satisfy? { username == 'john' && password == 'secret' }
+    assert @planner.initial_state.satisfy? { @username == 'john' && @password == 'secret' }
   end
 end

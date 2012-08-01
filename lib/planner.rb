@@ -10,7 +10,7 @@ class Planner
   end
 
   def set_up_initial_state(use_case)
-    @initial_state.apply(&use_case.precondition)
+    @initial_state.add(*use_case.dbc_instances)
   end
 
   def solve
