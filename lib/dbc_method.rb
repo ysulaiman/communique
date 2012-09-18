@@ -8,4 +8,13 @@ class DbcMethod
     @name = name
     @parameters = parameters
   end
+
+  def ==(other)
+    return true if other.equal?(self)
+    return false unless other.instance_of?(self.class)
+    other.name == @name && other.parameters == @parameters &&
+      other.receiver_name == @receiver_name
+    # TODO: You may also need to compare preconditions and postconditions.
+    # Since they are Procs, the Sourcify gem should come in handy.
+  end
 end
