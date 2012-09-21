@@ -37,6 +37,25 @@ class DbcObject
       other.dbc_methods == @dbc_methods
   end
 
+  def clone
+    copy = DbcObject.new(@dbc_name.clone, @dbc_class, @dbc_instance_variables.clone)
+
+    @dbc_instance_variables.each_key do |key|
+      begin
+        copy.instance_variable_set(key, self.instance_variable_get(key).clone)
+      rescue TypeError  # For classes that can't be cloned (e.g. Fixnum).
+        copy.instance_variable_set(key, self.instance_variable_get(key))
+      end
+    end
+
+    # Since there does not seem to be a need for each clone to have its own,
+    # separate DbcMethods, copies of the same DbcObject share the elements of
+    # the dbc_methods array.
+    copy.add_dbc_methods(*@dbc_methods)
+
+    copy
+  end
+
   private
 
   def initialize_dbc_instance_variables

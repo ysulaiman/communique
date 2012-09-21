@@ -144,4 +144,52 @@ class TestDbcObject < MiniTest::Unit::TestCase
 
     refute_equal @foo_instance, foo_instance_with_different_dbc_methods
   end
+
+  def test_can_be_deep_copied
+    new_dbc_object = @dbc_object.clone
+
+    assert_equal @dbc_object, new_dbc_object
+    refute new_dbc_object.equal?(@dbc_object)
+    refute new_dbc_object.dbc_name.equal?(@dbc_object.dbc_name)
+    refute new_dbc_object.dbc_instance_variables.equal?(@dbc_object.dbc_instance_variables)
+  end
+
+  def test_copies_current_values_of_dbc_instance_variables
+    @dbc_object.number = 'Fourty Two'
+    new_dbc_object = @dbc_object.clone
+
+    assert_equal @dbc_object.number, new_dbc_object.number
+    refute new_dbc_object.number.equal?(@dbc_object.number)
+  end
+
+  def test_copies_its_dbc_methods_in_the_process_of_deep_copying_itself
+    @dbc_object.add_dbc_methods(@dbc_method)
+    new_dbc_object = @dbc_object.clone
+
+    assert_equal @dbc_object.dbc_methods, new_dbc_object.dbc_methods
+  end
+
+  def test_handles_dbc_instance_variables_that_cannot_be_cloned
+    @dbc_object.number = 666
+    new_dbc_object = @dbc_object.clone
+
+    assert_equal 666, new_dbc_object.number
+  end
+
+  def test_deep_copies_its_dbc_objects_in_the_process_of_deep_copying_itself
+    foo_instance = DbcObject.new('foo', :Foo, {:@number => 42})
+    bar_instance = DbcObject.new('bar', :Bar, {:@foo => foo_instance})
+    baz_instance = DbcObject.new('baz', :Baz, {:@bar => bar_instance})
+
+    new_baz_instance = baz_instance.clone
+
+    assert_equal baz_instance, new_baz_instance
+    refute new_baz_instance.equal?(baz_instance)
+
+    assert_equal baz_instance.bar, new_baz_instance.bar
+    refute new_baz_instance.bar.equal?(baz_instance.bar)
+
+    assert_equal baz_instance.bar.foo, new_baz_instance.bar.foo
+    refute new_baz_instance.bar.foo.equal?(baz_instance.bar.foo)
+  end
 end
