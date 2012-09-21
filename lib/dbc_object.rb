@@ -1,5 +1,5 @@
 class DbcObject
-  attr_reader :dbc_name, :dbc_class, :dbc_methods
+  attr_reader :dbc_name, :dbc_class, :dbc_methods, :dbc_instance_variables
 
   def initialize(dbc_name, dbc_class, dbc_instance_variables)
     @dbc_name = dbc_name
@@ -28,6 +28,15 @@ class DbcObject
     reset_instance_variables_that_are_dbc_objects
   end
 
+  def ==(other)
+    return true if other.equal?(self)
+    return false unless other.instance_of?(self.class)
+
+    other.dbc_name == @dbc_name && other.dbc_class == @dbc_class &&
+      has_equal_dbc_instance_variables?(other) &&
+      other.dbc_methods == @dbc_methods
+  end
+
   private
 
   def initialize_dbc_instance_variables
@@ -52,6 +61,16 @@ class DbcObject
   def eigenclass
     class << self
       self
+    end
+  end
+
+  def has_equal_dbc_instance_variables?(other)
+    @dbc_instance_variables.all? do |key, value|
+      other.instance_variable_defined?(key) &&
+        other.instance_variable_get(key) == self.instance_variable_get(key)
+    end && other.dbc_instance_variables.all? do |key, value|
+      self.instance_variable_defined?(key) &&
+        self.instance_variable_get(key) == other.instance_variable_get(key)
     end
   end
 end

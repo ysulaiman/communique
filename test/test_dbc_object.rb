@@ -4,6 +4,8 @@ class TestDbcObject < MiniTest::Unit::TestCase
   def setup
     @dbc_object = DbcObject.new('account_instance', :Account, {:@number => 42})
     @dbc_method = DbcMethod.new('dbc_method')
+
+    @foo_instance = DbcObject.new('foo', :Foo, {:@foo => :foo})
   end
 
   def test_has_dbc_name
@@ -60,13 +62,12 @@ class TestDbcObject < MiniTest::Unit::TestCase
   end
 
   def test_instances_of_different_dbc_classes_have_different_accessors
-    foo_instance = DbcObject.new('foo', :Foo, {:@foo => :foo})
     bar_instance = DbcObject.new('bar', :Bar, {:@bar => :bar})
 
-    assert_respond_to foo_instance, :foo
-    assert_respond_to foo_instance, :foo=
-    refute_respond_to foo_instance, :bar
-    refute_respond_to foo_instance, :bar=
+    assert_respond_to @foo_instance, :foo
+    assert_respond_to @foo_instance, :foo=
+    refute_respond_to @foo_instance, :bar
+    refute_respond_to @foo_instance, :bar=
 
     assert_respond_to bar_instance, :bar
     assert_respond_to bar_instance, :bar=
@@ -90,5 +91,57 @@ class TestDbcObject < MiniTest::Unit::TestCase
 
     assert_equal 42, bar_instance.foo.number
     assert_equal 42, foo_instance.number
+  end
+
+  def test_equals_another_dbc_object_with_equal_dbc_name_and_class_and_instance_variables
+    equal_foo_instance = DbcObject.new('foo', :Foo, {:@foo => :foo})
+    assert_equal @foo_instance, equal_foo_instance
+
+    @foo_instance.foo = 'bar'
+    equal_foo_instance.foo = 'bar'
+
+    assert_equal @foo_instance, equal_foo_instance
+  end
+
+  def test_equals_another_equal_dbc_object_with_equal_dbc_methods
+    @foo_instance.add_dbc_methods(DbcMethod.new('dbc_method'))
+    equal_foo_instance = DbcObject.new('foo', :Foo, {:@foo => :foo})
+
+    equal_foo_instance.add_dbc_methods(DbcMethod.new('dbc_method'))
+
+    assert_equal @foo_instance, equal_foo_instance
+  end
+
+  def test_does_not_equal_another_dbc_objec_with_different_dbc_name
+    foo_instance_with_different_name = DbcObject.new('baz', :Foo, {:@foo => :foo})
+
+    refute_equal @foo_instance, foo_instance_with_different_name
+  end
+
+  def test_does_not_equal_another_dbc_objec_with_different_dbc_class
+    foo_instance_with_different_class = DbcObject.new('foo', :Baz, {:@foo => :foo})
+
+    refute_equal @foo_instance, foo_instance_with_different_class
+  end
+
+  def test_does_not_equal_another_dbc_objec_with_different_dbc_instance_variables_names
+    foo_instance_with_different_instance_variables_names = DbcObject.new('foo', :Foo, {:@baz => :foo})
+
+    refute_equal @foo_instance, foo_instance_with_different_instance_variables_names
+  end
+
+  def test_does_not_equal_another_dbc_objec_with_different_dbc_instance_variables_values
+    foo_instance_with_different_instance_variables_values = DbcObject.new('foo', :Foo, {:@foo => :foo})
+    foo_instance_with_different_instance_variables_values.foo = :bar
+
+    refute_equal @foo_instance, foo_instance_with_different_instance_variables_values
+  end
+
+  def test_does_not_equal_another_dbc_objec_with_different_dbc_methods
+    @foo_instance.add_dbc_methods(DbcMethod.new('method'))
+    foo_instance_with_different_dbc_methods = DbcObject.new('foo', :Foo, {:@foo => :fpp})
+    foo_instance_with_different_dbc_methods.add_dbc_methods(DbcMethod.new('another_method'))
+
+    refute_equal @foo_instance, foo_instance_with_different_dbc_methods
   end
 end
