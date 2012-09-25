@@ -30,6 +30,22 @@ class TestPlanner < MiniTest::Unit::TestCase
     assert_respond_to @planner, :goal=
   end
 
+  def test_has_accessible_algorithm
+    @planner.algorithm = :randomized_forward_search
+
+    assert_equal :randomized_forward_search, @planner.algorithm
+  end
+
+  def test_has_initial_default_algorithm
+    assert_equal :recursive_forward_search, @planner.algorithm
+  end
+
+  def test_can_be_initialized_with_a_specific_algorithm
+    planner = Planner.new(:recursive_forward_search)
+
+    assert_equal :recursive_forward_search, planner.algorithm
+  end
+
   def test_solves_trivial_problem
     counter_instance = DbcObject.new('counter', :Counter, {:@value => 42})
 
@@ -80,10 +96,26 @@ class TestPlanner < MiniTest::Unit::TestCase
     user_instance.add_dbc_methods(@parameterless_log_in, @log_out, @activate, @deactivate)
 
     @planner.initial_state.add(user_instance)
-    @planner.goal = Proc.new { @activated && !@logged_in}
+    @planner.goal = Proc.new { @activated && !@logged_in }
 
     @planner.solve
     assert_match /user.log_in\(\);.* user.activate\(\);.* user.log_out\(\)/, @planner.plan
+  end
+
+  def test_solves_non_trivial_problem_deterministically
+    user_instance = DbcObject.new('user', :User, {
+      :@logged_in => false,
+      :@activated => false
+    })
+
+    user_instance.add_dbc_methods(@parameterless_log_in, @log_out, @activate, @deactivate)
+
+    @planner.initial_state.add(user_instance)
+    @planner.goal = Proc.new { @activated && !@logged_in }
+    @planner.algorithm = :recursive_forward_search
+
+    @planner.solve
+    assert_equal "user.log_in(); user.activate(); user.log_out()", @planner.plan
   end
 
   def test_can_use_dbc_use_case_to_set_up_initial_state

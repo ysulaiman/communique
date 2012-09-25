@@ -2,10 +2,11 @@ require_relative 'state'
 
 class Planner
   attr_reader :initial_state
-  attr_accessor :goal
+  attr_accessor :algorithm, :goal
 
-  def initialize
+  def initialize(algorithm = :recursive_forward_search)
     @initial_state = State.new('S0')
+    @algorithm = algorithm
     @plan = []
   end
 
@@ -16,7 +17,12 @@ class Planner
   def solve
     @dbc_methods = @initial_state.get_dbc_methods_of_instances
 
-    @plan = forward_search
+    @plan = case @algorithm
+    when :randomized_forward_search
+      randomized_forward_search
+    when :recursive_forward_search
+      recursive_forward_search(@initial_state, [])
+    end
   end
 
   def plan
@@ -25,7 +31,7 @@ class Planner
 
   private
 
-  def forward_search
+  def randomized_forward_search
     state = @initial_state
     plan = []
 
@@ -41,13 +47,50 @@ class Planner
     end
   end
 
-  def find_applicable_methods(state)
-    @dbc_methods.find_all { |m| state.satisfy?(&m.precondition) }
+  def recursive_forward_search(state, called_methods_names)
+    return [] if state.satisfy?(&@goal)
+
+    applicable_methods = find_applicable_methods(state, called_methods_names)
+    return :failure if applicable_methods.empty?
+
+    applicable_methods.each do |method|
+      s0 = execute(state.clone, method)
+
+      called_methods_copy = copy_called_methods_names(called_methods_names)
+      called_methods_copy << method.name
+
+      pi = recursive_forward_search(s0, called_methods_copy)
+      if pi != :failure
+        return pi.unshift(method)
+      end
+    end
+
+    # Non of the applicable methods eventually lead to a goal state, so this
+    # state is a dead end.
+    return :failure
+  end
+
+  def find_applicable_methods(state, called_methods_names = nil)
+    if called_methods_names.nil?
+      @dbc_methods.find_all { |m| state.satisfy?(&m.precondition) }
+    else
+      @dbc_methods.find_all do |m|
+        state.satisfy?(&m.precondition) &&
+          ! called_methods_names.include?(m.name)
+      end
+    end
   end
 
   def execute(state, method)
     state.apply(method.receiver_name, &method.effect)
     state
+  end
+
+  def copy_called_methods_names(called_methods_names)
+    copy = []
+    called_methods_names.each { |method_name| copy << method_name }
+
+    copy
   end
 
   def create_sequence_diagram_ready_string(method)
