@@ -28,4 +28,11 @@ class State
   def get_dbc_methods_of_instances
     @dbc_objects.collect { |obj| obj.dbc_methods }.flatten
   end
+
+  def clone
+    dbc_objects_copy = []
+    @dbc_objects.each { |obj| dbc_objects_copy << obj.clone }
+
+    State.new(@name.clone, dbc_objects_copy)
+  end
 end

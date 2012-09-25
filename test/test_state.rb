@@ -51,4 +51,30 @@ class TestState < MiniTest::Unit::TestCase
   def test_responds_to_get_dbc_methods_of_instances
     assert_respond_to @state, :get_dbc_methods_of_instances
   end
+
+  def test_clones_its_dbc_objects_in_the_process_of_cloning_itself
+    new_state = @state.clone
+
+    assert new_state.include_instance_of?(:Account)
+  end
+
+  def test_copies_its_current_dbc_objects
+    @state.apply('account_instance') do
+      @number = 666
+      @holder = 'Jane Doe'
+    end
+    new_state = @state.clone
+
+    assert new_state.satisfy? { @number == 666 && @holder == 'Jane Doe' }
+  end
+
+  def test_applying_postconditions_to_it_does_not_affect_its_copies
+    unaffected_state = @state.clone
+    @state.apply('account_instance') do
+      @number = 666
+      @holder = 'Jane Doe'
+    end
+
+    assert unaffected_state.satisfy? { @number == 42 && @holder == 'John Doe' }
+  end
 end
