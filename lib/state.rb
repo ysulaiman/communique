@@ -18,7 +18,7 @@ class State
 
   def apply(dbc_object_name, &effect)
     dbc_object = @dbc_objects.find { |dbc_object| dbc_object.dbc_name == dbc_object_name }
-    dbc_object.instance_eval(&effect)
+    dbc_object.apply(&effect)
   end
 
   def include_instance_of?(dbc_class)
