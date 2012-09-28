@@ -24,7 +24,7 @@ class TestDbcUseCase < MiniTest::Unit::TestCase
   end
 
   def test_has_accessible_postcondition
-    assert_respond_to @use_case, :postcondition
-    assert_respond_to @use_case, :postcondition=
+    assert_respond_to @use_case, :postconditions
+    assert_respond_to @use_case, :postconditions=
   end
 end

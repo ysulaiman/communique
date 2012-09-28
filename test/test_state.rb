@@ -32,7 +32,13 @@ class TestState < MiniTest::Unit::TestCase
   end
 
   def test_can_check_if_it_satisfies_conditions
-    assert_equal true, @state.satisfy? { @number == 42 }
+    assert_equal true, @state.satisfy?({
+      'account_instance' => Proc.new { @number == 42 }
+    })
+
+    assert_equal false, @state.satisfy?({
+      'account_instance' => Proc.new { @number == 666 }
+    })
   end
 
   def test_can_apply_postconditions_to_one_of_its_dbc_objects
@@ -41,7 +47,9 @@ class TestState < MiniTest::Unit::TestCase
       @holder = 'Jane Doe'
     end
 
-    assert_equal true, @state.satisfy? { @number == 666 && @holder == 'Jane Doe' }
+    assert_equal true, @state.satisfy?({
+      'account_instance' => Proc.new { @number == 666 && @holder == 'Jane Doe' }
+    })
   end
 
   def test_can_check_if_it_contains_an_instance_of_a_DbC_class
@@ -65,7 +73,9 @@ class TestState < MiniTest::Unit::TestCase
     end
     new_state = @state.clone
 
-    assert new_state.satisfy? { @number == 666 && @holder == 'Jane Doe' }
+    assert new_state.satisfy?({
+      'account_instance' => Proc.new { @number == 666 && @holder == 'Jane Doe' }
+    })
   end
 
   def test_applying_postconditions_to_it_does_not_affect_its_copies
@@ -75,6 +85,8 @@ class TestState < MiniTest::Unit::TestCase
       @holder = 'Jane Doe'
     end
 
-    assert unaffected_state.satisfy? { @number == 42 && @holder == 'John Doe' }
+    assert unaffected_state.satisfy?({
+      'account_instance' => Proc.new { @number == 42 && @holder == 'John Doe' }
+    })
   end
 end

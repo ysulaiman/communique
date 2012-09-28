@@ -2,7 +2,7 @@ require_relative 'state'
 
 class Planner
   attr_reader :initial_state
-  attr_accessor :algorithm, :goal
+  attr_accessor :algorithm, :goals
 
   def initialize(algorithm = :recursive_forward_search)
     @initial_state = State.new('S0')
@@ -36,7 +36,7 @@ class Planner
     plan = []
 
     loop do
-      return plan if state.satisfy?(&@goal)
+      return plan if state.satisfy?(@goals)
 
       applicable_methods = find_applicable_methods(state)
       return :failure if applicable_methods.empty?
@@ -48,7 +48,7 @@ class Planner
   end
 
   def recursive_forward_search(state, called_methods_names)
-    return [] if state.satisfy?(&@goal)
+    return [] if state.satisfy?(@goals)
 
     applicable_methods = find_applicable_methods(state, called_methods_names)
     return :failure if applicable_methods.empty?
@@ -72,10 +72,10 @@ class Planner
 
   def find_applicable_methods(state, called_methods_names = nil)
     if called_methods_names.nil?
-      @dbc_methods.find_all { |m| state.satisfy?(&m.precondition) }
+      @dbc_methods.find_all { |m| state.satisfy?({m.receiver_name => m.precondition}) }
     else
       @dbc_methods.find_all do |m|
-        state.satisfy?(&m.precondition) &&
+        state.satisfy?({m.receiver_name => m.precondition}) &&
           ! called_methods_names.include?(m.name)
       end
     end
