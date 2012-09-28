@@ -12,8 +12,11 @@ class State
     @dbc_objects.merge(dbc_objects)
   end
 
-  def satisfy?(&condition)
-    @dbc_objects.any? { |dbc_object| dbc_object.satisfy?(&condition) }
+  def satisfy?(conditions)
+    conditions.all? do |object_name, condition_block|
+      dbc_object = @dbc_objects.find { |object| object.dbc_name == object_name }
+      dbc_object.satisfy?(&condition_block)
+    end
   end
 
   def apply(dbc_object_name, &effect)

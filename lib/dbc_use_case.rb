@@ -1,5 +1,5 @@
 class DbcUseCase
-  attr_accessor :name, :dbc_instances, :postcondition
+  attr_accessor :name, :dbc_instances, :postconditions
 
   def initialize(name)
     @name = name

@@ -25,9 +25,9 @@ class TestPlanner < MiniTest::Unit::TestCase
     assert_respond_to @planner, :initial_state
   end
 
-  def test_has_accessible_goal
-    assert_respond_to @planner, :goal
-    assert_respond_to @planner, :goal=
+  def test_has_accessible_goals
+    assert_respond_to @planner, :goals
+    assert_respond_to @planner, :goals=
   end
 
   def test_has_accessible_algorithm
@@ -56,7 +56,7 @@ class TestPlanner < MiniTest::Unit::TestCase
     counter_instance.add_dbc_methods(method)
 
     @planner.initial_state.add(counter_instance)
-    @planner.goal = Proc.new { @value == 43 }
+    @planner.goals = {'counter' => Proc.new { @value == 43 }}
 
     @planner.solve
     assert_equal 'counter.change_value_from_42_to_43()', @planner.plan
@@ -81,7 +81,7 @@ class TestPlanner < MiniTest::Unit::TestCase
     user_instance.add_dbc_methods(log_in, @log_out)
 
     @planner.initial_state.add(user_instance)
-    @planner.goal = Proc.new { @logged_in }
+    @planner.goals = {'user' => Proc.new { @logged_in }}
 
     @planner.solve
     assert_equal 'user.log_in(username, password)', @planner.plan
@@ -96,7 +96,7 @@ class TestPlanner < MiniTest::Unit::TestCase
     user_instance.add_dbc_methods(@parameterless_log_in, @log_out, @activate, @deactivate)
 
     @planner.initial_state.add(user_instance)
-    @planner.goal = Proc.new { @activated && !@logged_in }
+    @planner.goals = {'user' => Proc.new { @activated && !@logged_in }}
 
     @planner.solve
     assert_match /user.log_in\(\);.* user.activate\(\);.* user.log_out\(\)/, @planner.plan
@@ -111,7 +111,7 @@ class TestPlanner < MiniTest::Unit::TestCase
     user_instance.add_dbc_methods(@parameterless_log_in, @log_out, @activate, @deactivate)
 
     @planner.initial_state.add(user_instance)
-    @planner.goal = Proc.new { @activated && !@logged_in }
+    @planner.goals = {'user' => Proc.new { @activated && !@logged_in }}
     @planner.algorithm = :recursive_forward_search
 
     @planner.solve
@@ -127,6 +127,8 @@ class TestPlanner < MiniTest::Unit::TestCase
     use_case.dbc_instances << user_instance
 
     @planner.set_up_initial_state(use_case)
-    assert @planner.initial_state.satisfy? { @username == 'john' && @password == 'secret' }
+    assert @planner.initial_state.satisfy?({
+      'user' => Proc.new { @username == 'john' && @password == 'secret' }
+    })
   end
 end
