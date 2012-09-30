@@ -135,11 +135,11 @@ announcement_instance.add_dbc_methods(show_announcements, modify_announcement)
 
 login_use_case = DbcUseCase.new('Login')
 login_use_case.dbc_instances << account_instance
-login_use_case.postcondition = Proc.new { @dbc_class == :Account && @is_logged_in }
+login_use_case.postconditions = {'account' => Proc.new { @is_logged_in }}
 
 planner = Planner.new(:recursive_forward_search)
 planner.initial_state.add(account_instance, property_instance)
-planner.goal = login_use_case.postcondition
+planner.goals = login_use_case.postconditions
 
 puts "Solving UC #{login_use_case.name} ..."
 planner.solve
@@ -150,11 +150,11 @@ modify_property_use_case = DbcUseCase.new('Modify Property')
 modify_property_use_case.dbc_instances << account_instance << property_instance
 modify_property_use_case.reset_dbc_instances
 account_instance.is_logged_in = true
-modify_property_use_case.postcondition = Proc.new { @dbc_class == :Property && @is_modified && @manager_is_notified }
+modify_property_use_case.postconditions = {'property' => Proc.new { @is_modified && @manager_is_notified }}
 
 planner = Planner.new(:recursive_forward_search)
 planner.set_up_initial_state(modify_property_use_case)
-planner.goal = modify_property_use_case.postcondition
+planner.goals = modify_property_use_case.postconditions
 
 puts "Solving UC #{modify_property_use_case.name} ..."
 planner.solve
@@ -165,11 +165,11 @@ select_featured_property_use_case = DbcUseCase.new('Select Featured Property')
 select_featured_property_use_case.dbc_instances << account_instance << property_instance
 modify_property_use_case.reset_dbc_instances
 account_instance.is_logged_in = true
-select_featured_property_use_case.postcondition = Proc.new { @dbc_class == :Property && @is_featured }
+select_featured_property_use_case.postconditions = {'property' => Proc.new { @is_featured }}
 
 planner = Planner.new(:recursive_forward_search)
 planner.set_up_initial_state(select_featured_property_use_case)
-planner.goal = select_featured_property_use_case.postcondition
+planner.goals = select_featured_property_use_case.postconditions
 
 puts "Solving UC #{select_featured_property_use_case.name} ..."
 planner.solve
@@ -180,11 +180,11 @@ delete_property_use_case = DbcUseCase.new('Delete Property')
 delete_property_use_case.dbc_instances << account_instance << property_instance
 delete_property_use_case.reset_dbc_instances
 account_instance.is_logged_in = true
-delete_property_use_case.postcondition = Proc.new { @dbc_class == :Property && @deleted && @manager_is_notified }
+delete_property_use_case.postconditions = {'property' => Proc.new { @deleted && @manager_is_notified }}
 
 planner = Planner.new(:recursive_forward_search)
 planner.set_up_initial_state(delete_property_use_case)
-planner.goal = delete_property_use_case.postcondition
+planner.goals = delete_property_use_case.postconditions
 
 puts "Solving UC #{delete_property_use_case.name} ..."
 planner.solve
@@ -195,11 +195,11 @@ add_property_use_case = DbcUseCase.new('Add Property')
 add_property_use_case.dbc_instances << account_instance << property_instance
 add_property_use_case.reset_dbc_instances
 account_instance.is_logged_in = true
-add_property_use_case.postcondition = Proc.new { @dbc_class == :Property && @is_added && @manager_is_notified }
+add_property_use_case.postconditions = {'property' => Proc.new { @is_added && @manager_is_notified }}
 
 planner = Planner.new(:recursive_forward_search)
 planner.set_up_initial_state(add_property_use_case)
-planner.goal = add_property_use_case.postcondition
+planner.goals = add_property_use_case.postconditions
 
 puts "Solving UC #{add_property_use_case.name} ..."
 planner.solve
@@ -210,11 +210,11 @@ modify_announcement_use_case = DbcUseCase.new('Modify Announcement')
 modify_announcement_use_case.dbc_instances << account_instance << property_instance << announcement_instance
 modify_announcement_use_case.reset_dbc_instances
 account_instance.is_logged_in = true
-modify_announcement_use_case.postcondition = Proc.new { @dbc_class == :Announcement && @is_modified && @manager_is_notified }
+modify_announcement_use_case.postconditions = {'announcement' => Proc.new { @is_modified && @manager_is_notified }}
 
 planner = Planner.new(:recursive_forward_search)
 planner.set_up_initial_state(modify_announcement_use_case)
-planner.goal = modify_announcement_use_case.postcondition
+planner.goals = modify_announcement_use_case.postconditions
 
 puts "Solving UC #{modify_announcement_use_case.name} ..."
 planner.solve
