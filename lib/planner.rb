@@ -22,6 +22,8 @@ class Planner
       randomized_forward_search
     when :recursive_forward_search
       recursive_forward_search(@initial_state, [])
+    when :breadth_first_forward_search
+      breadth_first_forward_search
     end
   end
 
@@ -68,6 +70,30 @@ class Planner
     # Non of the applicable methods eventually lead to a goal state, so this
     # state is a dead end.
     return :failure
+  end
+
+  def breadth_first_forward_search
+    queue = []
+    queue.push([@initial_state.clone, []])
+
+    until queue.empty?
+      state, sequence_of_methods_leading_to_state = queue.shift
+      return sequence_of_methods_leading_to_state if state.satisfy?(@goals)
+
+      called_methods_names =
+        sequence_of_methods_leading_to_state.collect { |method| method.name }
+      applicable_methods = find_applicable_methods(state, called_methods_names)
+      return :failure if applicable_methods.empty?
+
+      applicable_methods.each do |method|
+        child_state = execute(state.clone, method)
+        sequence_of_methods_leading_to_child_state =
+          sequence_of_methods_leading_to_state.clone.push(method)
+        queue.push([child_state, sequence_of_methods_leading_to_child_state])
+      end
+    end
+
+    :failure
   end
 
   def find_applicable_methods(state, called_methods_names = nil)

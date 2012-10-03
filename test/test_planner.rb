@@ -118,6 +118,31 @@ class TestPlanner < MiniTest::Unit::TestCase
     assert_equal "user.log_in(); user.activate(); user.log_out()", @planner.plan
   end
 
+  def test_finds_shortest_plan_when_using_breadth_first_search
+    counter_instance = DbcObject.new('counter', :Counter, {:@value => 0})
+
+    increment_by_1 = DbcMethod.new('increment_by_1')
+    increment_by_1.precondition = Proc.new { true }
+    increment_by_1.effect = Proc.new { @value += 1 }
+
+    increment_by_2 = DbcMethod.new('increment_by_2')
+    increment_by_2.precondition = Proc.new { true }
+    increment_by_2.effect = Proc.new { @value += 2 }
+
+    increment_by_3 = DbcMethod.new('increment_by_3')
+    increment_by_3.precondition = Proc.new { true }
+    increment_by_3.effect = Proc.new { @value += 3 }
+
+    counter_instance.add_dbc_methods(increment_by_1, increment_by_2, increment_by_3)
+
+    @planner.initial_state.add(counter_instance)
+    @planner.goals = {'counter' => Proc.new { @value == 3 }}
+    @planner.algorithm = :breadth_first_forward_search
+
+    @planner.solve
+    assert_equal 'counter.increment_by_3()', @planner.plan
+  end
+
   def test_can_use_dbc_use_case_to_set_up_initial_state
     user_instance = DbcObject.new('user', :User, {
       :@username => 'john',
