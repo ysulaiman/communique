@@ -37,13 +37,13 @@ class TestPlanner < MiniTest::Unit::TestCase
   end
 
   def test_has_initial_default_algorithm
-    assert_equal :recursive_forward_search, @planner.algorithm
+    assert_equal :depth_first_forward_search, @planner.algorithm
   end
 
   def test_can_be_initialized_with_a_specific_algorithm
-    planner = Planner.new(:recursive_forward_search)
+    planner = Planner.new(:depth_first_forward_search)
 
-    assert_equal :recursive_forward_search, planner.algorithm
+    assert_equal :depth_first_forward_search, planner.algorithm
   end
 
   def test_solves_trivial_problem
@@ -112,7 +112,7 @@ class TestPlanner < MiniTest::Unit::TestCase
 
     @planner.initial_state.add(user_instance)
     @planner.goals = {'user' => Proc.new { @activated && !@logged_in }}
-    @planner.algorithm = :recursive_forward_search
+    @planner.algorithm = :depth_first_forward_search
 
     @planner.solve
     assert_equal "user.log_in(); user.activate(); user.log_out()", @planner.plan

@@ -4,7 +4,7 @@ class Planner
   attr_reader :initial_state
   attr_accessor :algorithm, :goals
 
-  def initialize(algorithm = :recursive_forward_search)
+  def initialize(algorithm = :depth_first_forward_search)
     @initial_state = State.new('S0')
     @algorithm = algorithm
     @plan = []
@@ -20,8 +20,8 @@ class Planner
     @plan = case @algorithm
     when :randomized_forward_search
       randomized_forward_search
-    when :recursive_forward_search
-      recursive_forward_search(@initial_state, [])
+    when :depth_first_forward_search
+      depth_first_forward_search(@initial_state, [])
     when :breadth_first_forward_search
       breadth_first_forward_search
     end
@@ -49,7 +49,7 @@ class Planner
     end
   end
 
-  def recursive_forward_search(state, called_methods_names)
+  def depth_first_forward_search(state, called_methods_names)
     return [] if state.satisfy?(@goals)
 
     applicable_methods = find_applicable_methods(state, called_methods_names)
@@ -61,7 +61,7 @@ class Planner
       called_methods_copy = copy_called_methods_names(called_methods_names)
       called_methods_copy << method.name
 
-      pi = recursive_forward_search(s0, called_methods_copy)
+      pi = depth_first_forward_search(s0, called_methods_copy)
       if pi != :failure
         return pi.unshift(method)
       end
@@ -69,7 +69,7 @@ class Planner
 
     # Non of the applicable methods eventually lead to a goal state, so this
     # state is a dead end.
-    return :failure
+    :failure
   end
 
   def breadth_first_forward_search
