@@ -4,7 +4,7 @@ class Planner
   attr_reader :initial_state
   attr_accessor :algorithm, :goals
 
-  def initialize(algorithm = :depth_first_forward_search)
+  def initialize(algorithm = :breadth_first_forward_search)
     @initial_state = State.new('S0')
     @algorithm = algorithm
     @plan = []

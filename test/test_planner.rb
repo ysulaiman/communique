@@ -37,7 +37,7 @@ class TestPlanner < MiniTest::Unit::TestCase
   end
 
   def test_has_initial_default_algorithm
-    assert_equal :depth_first_forward_search, @planner.algorithm
+    assert_equal :breadth_first_forward_search, @planner.algorithm
   end
 
   def test_can_be_initialized_with_a_specific_algorithm
