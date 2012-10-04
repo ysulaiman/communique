@@ -83,7 +83,7 @@ class Planner
       called_methods_names =
         sequence_of_methods_leading_to_state.collect { |method| method.name }
       applicable_methods = find_applicable_methods(state, called_methods_names)
-      return :failure if applicable_methods.empty?
+      next if applicable_methods.empty?
 
       applicable_methods.each do |method|
         child_state = execute(state.clone, method)
