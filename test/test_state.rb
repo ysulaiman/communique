@@ -75,6 +75,20 @@ class TestState < MiniTest::Unit::TestCase
     assert new_state.include_instance_of?(:Account)
   end
 
+  def test_should_not_create_more_than_one_clone_of_each_of_its_dbc_objects
+    skip('Figure out who is responsible for preventing this problem.')
+    foo_instance = DbcObject.new('foo', :Foo, {})
+    bar_instance = DbcObject.new('bar', :Bar, {:@foo => foo_instance})
+    baz_instance = DbcObject.new('baz', :Baz, {:@foo => foo_instance})
+
+    @state.add(foo_instance, bar_instance, baz_instance)
+    new_state = @state.clone
+    new_bar_instance = new_state.get_instance_of(:Bar)
+    new_baz_instance = new_state.get_instance_of(:Baz)
+
+    assert new_bar_instance.foo.equal?(new_baz_instance.foo)
+  end
+
   def test_copies_its_current_dbc_objects
     @state.apply('account_instance') do
       @number = 666
