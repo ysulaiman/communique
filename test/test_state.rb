@@ -2,11 +2,13 @@ require_relative 'test_helpers'
 
 class TestState < MiniTest::Unit::TestCase
   def setup
-    account_instance = DbcObject.new('account_instance', :Account, {
+    @account_instance = DbcObject.new('account_instance', :Account, {
       :@number => 42,
       :@holder => 'John Doe'
     })
-    @state = State.new('S0', [account_instance])
+    @state = State.new('S0', [@account_instance])
+
+    @foo_instance = DbcObject.new('foo_instance', :Foo, { :@bar => 'bar' })
   end
 
   def test_has_name
@@ -14,10 +16,17 @@ class TestState < MiniTest::Unit::TestCase
   end
 
   def test_can_add_dbc_object_to_itself
-    foo_instance = DbcObject.new('foo_instance', :Foo, { :@bar => 'bar' })
-    @state.add(foo_instance)
+    @state.add(@foo_instance)
 
     assert_equal true, @state.include_instance_of?(:Foo)
+  end
+
+  def test_sets_state_of_dbc_object_when_it_gets_added
+    assert_equal @state, @account_instance.state
+
+    @state.add(@foo_instance)
+
+    assert_equal @state, @foo_instance.state
   end
 
   def test_can_add_multiple_dbc_object_to_itself_in_one_call
@@ -88,5 +97,11 @@ class TestState < MiniTest::Unit::TestCase
     assert unaffected_state.satisfy?({
       'account_instance' => Proc.new { @number == 42 && @holder == 'John Doe' }
     })
+  end
+
+  def test_returns_a_dbc_object_of_a_given_class
+    dbc_object = @state.get_instance_of(:Account)
+
+    assert_equal :Account, dbc_object.dbc_class
   end
 end

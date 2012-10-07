@@ -192,4 +192,9 @@ class TestDbcObject < MiniTest::Unit::TestCase
     assert_equal baz_instance.bar.foo, new_baz_instance.bar.foo
     refute new_baz_instance.bar.foo.equal?(baz_instance.bar.foo)
   end
+
+  def test_has_accessible_state
+    assert_respond_to @dbc_object, :state
+    assert_respond_to @dbc_object, :state=
+  end
 end

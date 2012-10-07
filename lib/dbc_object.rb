@@ -1,4 +1,5 @@
 class DbcObject
+  attr_accessor :state
   attr_reader :dbc_name, :dbc_class, :dbc_methods, :dbc_instance_variables
 
   def initialize(dbc_name, dbc_class, dbc_instance_variables)
