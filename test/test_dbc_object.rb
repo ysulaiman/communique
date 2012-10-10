@@ -176,23 +176,6 @@ class TestDbcObject < MiniTest::Unit::TestCase
     assert_equal 666, new_dbc_object.number
   end
 
-  def test_deep_copies_its_dbc_objects_in_the_process_of_deep_copying_itself
-    foo_instance = DbcObject.new('foo', :Foo, {:@number => 42})
-    bar_instance = DbcObject.new('bar', :Bar, {:@foo => foo_instance})
-    baz_instance = DbcObject.new('baz', :Baz, {:@bar => bar_instance})
-
-    new_baz_instance = baz_instance.clone
-
-    assert_equal baz_instance, new_baz_instance
-    refute new_baz_instance.equal?(baz_instance)
-
-    assert_equal baz_instance.bar, new_baz_instance.bar
-    refute new_baz_instance.bar.equal?(baz_instance.bar)
-
-    assert_equal baz_instance.bar.foo, new_baz_instance.bar.foo
-    refute new_baz_instance.bar.foo.equal?(baz_instance.bar.foo)
-  end
-
   def test_has_accessible_state
     assert_respond_to @dbc_object, :state
     assert_respond_to @dbc_object, :state=

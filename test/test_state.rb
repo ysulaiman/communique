@@ -75,18 +75,41 @@ class TestState < MiniTest::Unit::TestCase
     assert new_state.include_instance_of?(:Account)
   end
 
+  def test_knows_if_it_contains_a_dbc_object_of_a_given_dbc_class
+    assert_equal true, @state.include_instance_of?(:Account)
+  end
+
+  def test_knows_if_it_contains_a_dbc_object_with_a_given_name
+    assert_equal true, @state.include_instance_named?('account_instance')
+  end
+
+  def test_can_return_one_of_its_dbc_objects_given_its_dbc_class
+    assert_equal @account_instance, @state.get_instance_of(:Account)
+  end
+
+  def test_can_return_one_of_its_dbc_objects_given_its_dbc_name
+    assert_equal @account_instance,
+                 @state.get_instance_named('account_instance')
+  end
+
   def test_should_not_create_more_than_one_clone_of_each_of_its_dbc_objects
-    skip('Figure out who is responsible for preventing this problem.')
-    foo_instance = DbcObject.new('foo', :Foo, {})
-    bar_instance = DbcObject.new('bar', :Bar, {:@foo => foo_instance})
-    baz_instance = DbcObject.new('baz', :Baz, {:@foo => foo_instance})
+    host = DbcObject.new('host', :Vote, {})
+    first_meeting = DbcObject.new('first_meeting', :Meeting, {
+      :@host => host
+    })
+    second_meeting = DbcObject.new('second_meeting', :Meeting, {
+      :@host => host
+    })
+    state = State.new('state', [host, first_meeting, second_meeting])
 
-    @state.add(foo_instance, bar_instance, baz_instance)
-    new_state = @state.clone
-    new_bar_instance = new_state.get_instance_of(:Bar)
-    new_baz_instance = new_state.get_instance_of(:Baz)
+    new_state = state.clone
+    new_host = new_state.get_instance_named('host')
+    new_first_meeting = new_state.get_instance_named('first_meeting')
+    new_second_meeting = new_state.get_instance_named('second_meeting')
 
-    assert new_bar_instance.foo.equal?(new_baz_instance.foo)
+    assert new_host.equal?(new_first_meeting.host)
+    assert new_host.equal?(new_second_meeting.host)
+    assert new_host.equal?(new_state.get_instance_of(:Meeting).host)
   end
 
   def test_copies_its_current_dbc_objects

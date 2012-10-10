@@ -39,11 +39,16 @@ class DbcObject
   end
 
   def clone
-    copy = DbcObject.new(@dbc_name.clone, @dbc_class, @dbc_instance_variables.clone)
+    copy = DbcObject.new(@dbc_name.clone, @dbc_class,
+                         @dbc_instance_variables.clone)
 
     @dbc_instance_variables.each_key do |key|
       begin
-        copy.instance_variable_set(key, self.instance_variable_get(key).clone)
+        current_instance_variable = self.instance_variable_get(key)
+        # Don't copy instance variables that are DbcObjects as their copying is
+        # taken care of by the State.
+        copy.instance_variable_set(key, current_instance_variable.clone) unless
+          current_instance_variable.is_a?(DbcObject)
       rescue TypeError  # For classes that can't be cloned (e.g. Fixnum).
         copy.instance_variable_set(key, self.instance_variable_get(key))
       end
