@@ -56,11 +56,8 @@ user_profile_instance.add_dbc_methods(log_in, log_out,
 add_notification = DbcMethod.new(:add_notification)
 add_notification.precondition = Proc.new do
   @dbc_class == :Notification &&
-    ! state.get_instance_of(:Vote).nil? &&
-    state.get_instance_of(:Vote).is_closed
-  # TODO: Solve the problem of "over-cloning" to be able to write the correct
-  # condition, i.e.:
-  # state.get_instance_of(:Meeting).vote.is_closed
+    ! state.get_instance_of(:Meeting).nil? &&
+    state.get_instance_of(:Meeting).vote.is_closed
 end
 add_notification.postcondition = Proc.new do
   @meeting = state.get_instance_of(:Meeting)
