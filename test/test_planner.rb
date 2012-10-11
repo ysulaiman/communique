@@ -99,7 +99,8 @@ class TestPlanner < MiniTest::Unit::TestCase
     @planner.goals = {'user' => Proc.new { @activated && !@logged_in }}
 
     @planner.solve
-    assert_match /user.log_in\(\);.* user.activate\(\);.* user.log_out\(\)/, @planner.plan
+    assert_match /user.log_in\(\);.* user.activate\(\);.* user.log_out\(\)/,
+                 @planner.plan
   end
 
   def test_solves_non_trivial_problem_deterministically
@@ -155,5 +156,9 @@ class TestPlanner < MiniTest::Unit::TestCase
     assert @planner.initial_state.satisfy?({
       'user' => Proc.new { @username == 'john' && @password == 'secret' }
     })
+  end
+
+  def test_has_readable_number_of_states_tested_for_goals
+    assert_respond_to @planner, :number_of_states_tested_for_goals
   end
 end

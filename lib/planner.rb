@@ -1,13 +1,14 @@
 require_relative 'state'
 
 class Planner
-  attr_reader :initial_state
+  attr_reader :initial_state, :number_of_states_tested_for_goals
   attr_accessor :algorithm, :goals
 
   def initialize(algorithm = :breadth_first_forward_search)
     @initial_state = State.new('S0')
     @algorithm = algorithm
     @plan = []
+    @number_of_states_tested_for_goals = 0
   end
 
   def set_up_initial_state(use_case)
@@ -15,6 +16,7 @@ class Planner
   end
 
   def solve
+    @number_of_states_tested_for_goals = 0
     @dbc_methods = @initial_state.get_dbc_methods_of_instances
 
     @plan = case @algorithm
@@ -38,6 +40,7 @@ class Planner
     plan = []
 
     loop do
+      @number_of_states_tested_for_goals += 1
       return plan if state.satisfy?(@goals)
 
       applicable_methods = find_applicable_methods(state)
@@ -50,6 +53,7 @@ class Planner
   end
 
   def depth_first_forward_search(state, called_methods_names)
+    @number_of_states_tested_for_goals += 1
     return [] if state.satisfy?(@goals)
 
     applicable_methods = find_applicable_methods(state, called_methods_names)
@@ -78,6 +82,8 @@ class Planner
 
     until queue.empty?
       state, sequence_of_methods_leading_to_state = queue.shift
+
+      @number_of_states_tested_for_goals += 1
       return sequence_of_methods_leading_to_state if state.satisfy?(@goals)
 
       called_methods_names =
@@ -93,6 +99,7 @@ class Planner
       end
     end
 
+    # All states were explored and none of them was a goal state.
     :failure
   end
 
