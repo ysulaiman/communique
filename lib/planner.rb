@@ -7,7 +7,6 @@ class Planner
   def initialize(algorithm = :breadth_first_forward_search)
     @initial_state = State.new('S0')
     @algorithm = algorithm
-    @plan = []
     @number_of_states_tested_for_goals = 0
   end
 
