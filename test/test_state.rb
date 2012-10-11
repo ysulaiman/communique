@@ -61,10 +61,6 @@ class TestState < MiniTest::Unit::TestCase
     })
   end
 
-  def test_can_check_if_it_contains_an_instance_of_a_DbC_class
-    assert_equal true, @state.include_instance_of?(:Account)
-  end
-
   def test_responds_to_get_dbc_methods_of_instances
     assert_respond_to @state, :get_dbc_methods_of_instances
   end
@@ -134,11 +130,5 @@ class TestState < MiniTest::Unit::TestCase
     assert unaffected_state.satisfy?({
       'account_instance' => Proc.new { @number == 42 && @holder == 'John Doe' }
     })
-  end
-
-  def test_returns_a_dbc_object_of_a_given_class
-    dbc_object = @state.get_instance_of(:Account)
-
-    assert_equal :Account, dbc_object.dbc_class
   end
 end
