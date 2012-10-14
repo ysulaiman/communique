@@ -1,3 +1,6 @@
+require 'rubygems'
+require 'algorithms'
+
 require_relative 'state'
 
 class Planner
@@ -25,6 +28,8 @@ class Planner
       depth_first_forward_search(@initial_state, [])
     when :breadth_first_forward_search
       breadth_first_forward_search
+    when :best_first_forward_search
+      best_first_forward_search
     end
   end
 
@@ -100,6 +105,52 @@ class Planner
 
     # All states were explored and none of them was a goal state.
     :failure
+  end
+
+  def best_first_forward_search
+    priority_queue = Containers::PriorityQueue.new
+    node = [@initial_state.clone, []]
+    priority_queue.push(node, -f(node)) # Higher priority for lower f(n).
+
+    until priority_queue.empty?
+      state, sequence_of_methods_leading_to_state = priority_queue.pop
+
+      @number_of_states_tested_for_goals += 1
+      return sequence_of_methods_leading_to_state if state.satisfy?(@goals)
+
+      # TODO: Use called-methods hack?
+      applicable_methods = find_applicable_methods(state)
+      next if applicable_methods.empty?
+
+      applicable_methods.each do |method|
+        child_state = execute(state.clone, method)
+        sequence_of_methods_leading_to_child_state =
+          sequence_of_methods_leading_to_state.clone.push(method)
+        node = [child_state, sequence_of_methods_leading_to_child_state]
+        priority_queue.push(node, -f(node)) # Higher priority for lower f(n).
+      end
+    end
+
+    # All states were explored and none of them was a goal state.
+    :failure
+  end
+
+  # The evaluation, or objective, function
+  def f(n)
+    g(n) + h(n)
+  end
+
+  def g(n)
+    sequence_of_methods_leading_to_state = n.last
+
+    sequence_of_methods_leading_to_state.count
+  end
+
+  # The heuristic function
+  def h(n)
+    state = n.first
+
+    state.number_of_objects_not_satisfying_their_conditions(@goals)
   end
 
   def find_applicable_methods(state, called_methods_names = nil)
