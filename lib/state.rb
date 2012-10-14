@@ -15,9 +15,12 @@ class State
   end
 
   def satisfy?(conditions)
-    conditions.all? do |object_name, condition_block|
-      dbc_object = @dbc_objects.find { |o| o.dbc_name == object_name }
-      dbc_object.satisfy?(&condition_block)
+    number_of_objects_not_satisfying_their_conditions(conditions) == 0
+  end
+
+  def number_of_objects_not_satisfying_their_conditions(conditions)
+    conditions.count do |object_name, condition_block|
+      ! object_satisfy?(object_name, &condition_block)
     end
   end
 
@@ -79,5 +82,11 @@ class State
 
   def set_state_to_self(dbc_objects)
     dbc_objects.each { |object| object.state = self }
+  end
+
+  def object_satisfy?(object_name, &condition)
+    dbc_object = @dbc_objects.find { |o| o.dbc_name == object_name }
+
+    dbc_object.satisfy?(&condition)
   end
 end

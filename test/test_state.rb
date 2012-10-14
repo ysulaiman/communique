@@ -8,7 +8,7 @@ class TestState < MiniTest::Unit::TestCase
     })
     @state = State.new('S0', [@account_instance])
 
-    @foo_instance = DbcObject.new('foo_instance', :Foo, { :@bar => 'bar' })
+    @foo_instance = DbcObject.new('foo_instance', :Foo, { :@foo => 'foo' })
   end
 
   def test_has_name
@@ -47,6 +47,24 @@ class TestState < MiniTest::Unit::TestCase
 
     assert_equal false, @state.satisfy?({
       'account_instance' => Proc.new { @number == 666 }
+    })
+  end
+
+  def test_can_be_asked_how_many_of_its_objects_do_not_satisfy_their_conditions
+    @state.add(@foo_instance)
+
+    assert_equal 0, @state.number_of_objects_not_satisfying_their_conditions({
+      'account_instance' => Proc.new { @number == 42 },
+      'foo_instance' => Proc.new { @foo == 'foo' }
+    })
+
+    assert_equal 1, @state.number_of_objects_not_satisfying_their_conditions({
+      'account_instance' => Proc.new { @number == 666 }
+    })
+
+    assert_equal 2, @state.number_of_objects_not_satisfying_their_conditions({
+      'account_instance' => Proc.new { @number == 666 },
+      'foo_instance' => Proc.new { @foo == 'bar' },
     })
   end
 
