@@ -44,7 +44,15 @@ log_out.postcondition = Proc.new { @is_logged_in = false }
 update_user_notifications = DbcMethod.new(:update_user_notifications)
 update_user_notifications.precondition = Proc.new do
   @dbc_class == :UserProfile &&
-    ! state.get_instance_of(:Notification).nil?
+    ! state.get_instance_of(:Notification).nil? &&
+    # TODO: Using the following condition instead:
+    #! state.get_instance_of(:Notification).meeting.nil? &&
+    # fixes the order of user_profile.update_user_notifications() and
+    # notification.add_notification(), but the planner seems to insist on
+    # calling notification.add_notification() a second time at the end of the
+    # plan. Why?
+    state.get_instance_of(:Meeting).is_final_meeting_time_set &&
+    state.get_instance_of(:Meeting).is_final_meeting_location_set
 end
 update_user_notifications.postcondition = Proc.new do
   @notifications << state.get_instance_of(:Notification)
@@ -105,7 +113,9 @@ finalize_meeting_use_case.postconditions = {
 planner = Planner.new
 planner.set_up_initial_state(finalize_meeting_use_case)
 planner.goals = finalize_meeting_use_case.postconditions
+planner.algorithm = :best_first_forward_search
 
 puts "Solving UC #{finalize_meeting_use_case.name} ..."
 planner.solve
-puts "Solution: #{planner.plan}\n"
+puts "Solution: #{planner.plan}"
+puts "# Goal Tests: #{planner.number_of_states_tested_for_goals}"

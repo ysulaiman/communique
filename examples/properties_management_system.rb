@@ -8,12 +8,21 @@ require_relative '../lib/dbc_object'
 require_relative '../lib/dbc_use_case'
 require_relative '../lib/planner'
 
+def solve_and_report(use_case)
+  planner = Planner.new(:best_first_forward_search)
+  planner.set_up_initial_state(use_case)
+  planner.goals = use_case.postconditions
+
+  puts "Solving UC #{use_case.name} ..."
+  planner.solve
+  puts "Solution: #{planner.plan}"
+  puts "# Goal Tests: #{planner.number_of_states_tested_for_goals}\n\n"
+end
 
 account_instance = DbcObject.new('account', :Account, {
   :@is_logged_in => false
 })
 
-# TODO: Use login parameters (username and password).
 log_in = DbcMethod.new('log_in')
 log_in.precondition = Proc.new do
   @dbc_class == :Account &&
@@ -102,7 +111,10 @@ add_property.postcondition = Proc.new do
   @manager_is_notified = true
 end
 
-property_instance.add_dbc_methods(show_properties, modify_property, select_featured_property, unselect_featured_property, delete_property, add_property)
+property_instance.add_dbc_methods(show_properties, modify_property,
+                                  select_featured_property,
+                                  unselect_featured_property, delete_property,
+                                  add_property)
 
 
 announcement_instance = DbcObject.new('announcement', :Announcement, {
@@ -134,88 +146,53 @@ announcement_instance.add_dbc_methods(show_announcements, modify_announcement)
 
 
 login_use_case = DbcUseCase.new('Login')
-login_use_case.dbc_instances << account_instance
+login_use_case.dbc_instances << account_instance << property_instance <<
+  announcement_instance
 login_use_case.postconditions = {'account' => Proc.new { @is_logged_in }}
 
-planner = Planner.new
-planner.initial_state.add(account_instance, property_instance)
-planner.goals = login_use_case.postconditions
-
-puts "Solving UC #{login_use_case.name} ..."
-planner.solve
-puts "Solution: #{planner.plan}\n\n"
-
+solve_and_report(login_use_case)
 
 modify_property_use_case = DbcUseCase.new('Modify Property')
-modify_property_use_case.dbc_instances << account_instance << property_instance
+modify_property_use_case.dbc_instances << account_instance <<
+  property_instance << announcement_instance
 modify_property_use_case.reset_dbc_instances
 account_instance.is_logged_in = true
 modify_property_use_case.postconditions = {'property' => Proc.new { @is_modified && @manager_is_notified }}
 
-planner = Planner.new
-planner.set_up_initial_state(modify_property_use_case)
-planner.goals = modify_property_use_case.postconditions
-
-puts "Solving UC #{modify_property_use_case.name} ..."
-planner.solve
-puts "Solution: #{planner.plan}\n\n"
-
+solve_and_report(modify_property_use_case)
 
 select_featured_property_use_case = DbcUseCase.new('Select Featured Property')
-select_featured_property_use_case.dbc_instances << account_instance << property_instance
+select_featured_property_use_case.dbc_instances << account_instance <<
+  property_instance << announcement_instance
 modify_property_use_case.reset_dbc_instances
 account_instance.is_logged_in = true
 select_featured_property_use_case.postconditions = {'property' => Proc.new { @is_featured }}
 
-planner = Planner.new
-planner.set_up_initial_state(select_featured_property_use_case)
-planner.goals = select_featured_property_use_case.postconditions
-
-puts "Solving UC #{select_featured_property_use_case.name} ..."
-planner.solve
-puts "Solution: #{planner.plan}\n\n"
-
+solve_and_report(select_featured_property_use_case)
 
 delete_property_use_case = DbcUseCase.new('Delete Property')
-delete_property_use_case.dbc_instances << account_instance << property_instance
+delete_property_use_case.dbc_instances << account_instance <<
+  property_instance << announcement_instance
 delete_property_use_case.reset_dbc_instances
 account_instance.is_logged_in = true
 delete_property_use_case.postconditions = {'property' => Proc.new { @deleted && @manager_is_notified }}
 
-planner = Planner.new
-planner.set_up_initial_state(delete_property_use_case)
-planner.goals = delete_property_use_case.postconditions
-
-puts "Solving UC #{delete_property_use_case.name} ..."
-planner.solve
-puts "Solution: #{planner.plan}\n\n"
-
+solve_and_report(delete_property_use_case)
 
 add_property_use_case = DbcUseCase.new('Add Property')
-add_property_use_case.dbc_instances << account_instance << property_instance
+add_property_use_case.dbc_instances << account_instance << property_instance <<
+  announcement_instance
 add_property_use_case.reset_dbc_instances
 account_instance.is_logged_in = true
 add_property_use_case.postconditions = {'property' => Proc.new { @is_added && @manager_is_notified }}
 
-planner = Planner.new
-planner.set_up_initial_state(add_property_use_case)
-planner.goals = add_property_use_case.postconditions
-
-puts "Solving UC #{add_property_use_case.name} ..."
-planner.solve
-puts "Solution: #{planner.plan}\n\n"
-
+solve_and_report(add_property_use_case)
 
 modify_announcement_use_case = DbcUseCase.new('Modify Announcement')
-modify_announcement_use_case.dbc_instances << account_instance << property_instance << announcement_instance
+modify_announcement_use_case.dbc_instances << account_instance <<
+  property_instance << announcement_instance
 modify_announcement_use_case.reset_dbc_instances
 account_instance.is_logged_in = true
 modify_announcement_use_case.postconditions = {'announcement' => Proc.new { @is_modified && @manager_is_notified }}
 
-planner = Planner.new
-planner.set_up_initial_state(modify_announcement_use_case)
-planner.goals = modify_announcement_use_case.postconditions
-
-puts "Solving UC #{modify_announcement_use_case.name} ..."
-planner.solve
-puts "Solution: #{planner.plan}\n\n"
+solve_and_report(modify_announcement_use_case)
