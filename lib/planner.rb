@@ -1,5 +1,5 @@
 require 'rubygems'
-require 'algorithms'
+require 'depq'
 
 require_relative 'state'
 
@@ -108,12 +108,12 @@ class Planner
   end
 
   def best_first_forward_search
-    priority_queue = Containers::PriorityQueue.new
+    priority_queue = Depq.new
     node = [@initial_state.clone, []]
-    priority_queue.push(node, -f(node)) # Higher priority for lower f(n).
+    priority_queue.insert(node, f(node))
 
     until priority_queue.empty?
-      state, sequence_of_methods_leading_to_state = priority_queue.pop
+      state, sequence_of_methods_leading_to_state = priority_queue.delete_min
 
       @number_of_states_tested_for_goals += 1
       return sequence_of_methods_leading_to_state if state.satisfy?(@goals)
@@ -127,7 +127,7 @@ class Planner
         sequence_of_methods_leading_to_child_state =
           sequence_of_methods_leading_to_state.clone.push(method)
         node = [child_state, sequence_of_methods_leading_to_child_state]
-        priority_queue.push(node, -f(node)) # Higher priority for lower f(n).
+        priority_queue.insert(node, f(node))
       end
     end
 
