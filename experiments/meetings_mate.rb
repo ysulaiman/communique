@@ -127,6 +127,8 @@ finalize_meeting_use_case.postconditions = {
   # collection on later runs.
   Benchmark.bm(11) do |x|
     x.report("#{number_of_noise_methods} methods:") { planner.solve }
+    puts "# Goal Tests: #{planner.number_of_states_tested_for_goals}"
+    puts planner.plan
     # TODO: Write the results to a file.
   end
 end
