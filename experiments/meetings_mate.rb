@@ -121,6 +121,7 @@ finalize_meeting_use_case.postconditions = {
   planner = Planner.new
   planner.set_up_initial_state(finalize_meeting_use_case)
   planner.goals = finalize_meeting_use_case.postconditions
+  planner.algorithm = :best_first_forward_search
 
   # TODO: Consider using Benchmark#bmbm to minimize the effect of garbage
   # collection on later runs.
