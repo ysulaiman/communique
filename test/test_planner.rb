@@ -208,4 +208,32 @@ class TestPlanner < MiniTest::Unit::TestCase
 
     assert_equal :failure, @planner.plan
   end
+
+  def test_best_first_allows_multiple_same_name_messages_if_each_improves_h
+    counter_1_instance = DbcObject.new('counter_1', :Counter, {:@value => 0})
+    counter_2_instance = DbcObject.new('counter_2', :Counter, {:@value => 0})
+
+    increment_counter_1_by_1 = DbcMethod.new(:increment_by_1)
+    increment_counter_1_by_1.precondition = Proc.new { true }
+    increment_counter_1_by_1.effect = Proc.new { @value += 1 }
+
+    increment_counter_2_by_1 = DbcMethod.new(:increment_by_1)
+    increment_counter_2_by_1.precondition = Proc.new { true }
+    increment_counter_2_by_1.effect = Proc.new { @value += 1 }
+
+    counter_1_instance.add_dbc_methods(increment_counter_1_by_1)
+    counter_2_instance.add_dbc_methods(increment_counter_2_by_1)
+
+    @planner.initial_state.add(counter_1_instance, counter_2_instance)
+    @planner.goals = {
+      'counter_1' => Proc.new { @value == 1 },
+      'counter_2' => Proc.new { @value == 1 },
+    }
+    @planner.algorithm = :best_first_forward_search
+
+    @planner.solve
+
+    assert_equal 'counter_1.increment_by_1(); counter_2.increment_by_1()',
+      @planner.plan
+  end
 end

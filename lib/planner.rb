@@ -120,8 +120,10 @@ class Planner
       @number_of_states_tested_for_goals += 1
       return sequence_of_methods_leading_to_state if state.satisfy?(@goals)
 
-      # TODO: Use called-methods hack?
       applicable_methods = find_applicable_methods(state)
+      delete_previously_called_methods_that_dont_improve_h(applicable_methods,
+                                                           sequence_of_methods_leading_to_state,
+                                                           state)
       next if applicable_methods.empty?
 
       applicable_methods.each do |method|
@@ -163,6 +165,20 @@ class Planner
         state.satisfy?({m.receiver_name => m.precondition}) &&
           ! called_methods_names.include?(m.name)
       end
+    end
+  end
+
+  def delete_previously_called_methods_that_dont_improve_h(applicable_methods,
+                                                           sequence_of_methods_leading_to_state,
+                                                           state)
+    called_methods_names =
+      sequence_of_methods_leading_to_state.collect { |method| method.name }
+
+    applicable_methods.delete_if do |method|
+      child_state = execute(state.clone, method)
+
+      called_methods_names.include?(method.name) &&
+        h([child_state, nil]) >= h([state, nil])
     end
   end
 
