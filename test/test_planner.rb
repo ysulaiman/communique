@@ -191,4 +191,21 @@ class TestPlanner < MiniTest::Unit::TestCase
   def test_has_readable_number_of_states_tested_for_goals
     assert_respond_to @planner, :number_of_states_tested_for_goals
   end
+
+  def test_sets_plan_to_failure_symbol_when_it_fails_to_solve_the_problem
+    switch_instance = DbcObject.new('switch', :Switch, {:@is_on => false})
+
+    useless_method = DbcMethod.new(:no_operation)
+    useless_method.precondition = Proc.new { true }
+    useless_method.effect = Proc.new {}
+
+    switch_instance.add_dbc_methods(useless_method)
+
+    @planner.initial_state.add(switch_instance)
+    @planner.goals = {'switch' => Proc.new { @is_on }}
+
+    @planner.solve
+
+    assert_equal :failure, @planner.plan
+  end
 end

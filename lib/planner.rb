@@ -34,6 +34,8 @@ class Planner
   end
 
   def plan
+    return @plan if @plan == :failure
+
     @plan.collect { |method| create_sequence_diagram_ready_string(method) }.join('; ')
   end
 
