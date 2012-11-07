@@ -78,6 +78,17 @@ class State
     clone_state
   end
 
+  def dbc_objects_refering_to(dbc_object_name)
+    return [] unless self.include_instance_named?(dbc_object_name)
+
+    dbc_object_in_question = self.get_instance_named(dbc_object_name)
+
+    @dbc_objects.find_all do |dbc_object|
+      dbc_object.instance_variable_defined?("@#{dbc_object_name}") &&
+        dbc_object_in_question == dbc_object.send(dbc_object_name)
+    end
+  end
+
   private
 
   def set_state_to_self(dbc_objects)

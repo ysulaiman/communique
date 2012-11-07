@@ -149,4 +149,21 @@ class TestState < MiniTest::Unit::TestCase
       'account_instance' => Proc.new { @number == 42 && @holder == 'John Doe' }
     })
   end
+
+  def test_can_determine_which_of_its_dbc_objects_refer_to_object_given_its_name
+    door_instance = DbcObject.new('door', :Door, {:@is_open => false})
+    correct_room_instance = DbcObject.new('incorrect_room', :Room, {
+      :@door => door_instance
+    })
+    incorrect_room_instance = DbcObject.new('correct_room', :Room, {
+      :@door => nil
+    })
+
+    @state.add(door_instance, correct_room_instance, incorrect_room_instance)
+
+    assert_equal [], @state.dbc_objects_refering_to('nonexisting_object')
+
+    assert_equal [correct_room_instance],
+                 @state.dbc_objects_refering_to('door')
+  end
 end
