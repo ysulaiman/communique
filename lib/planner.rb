@@ -4,7 +4,7 @@ require 'depq'
 require_relative 'state'
 
 class Planner
-  attr_reader :initial_state, :number_of_states_tested_for_goals
+  attr_reader :initial_state, :number_of_states_tested_for_goals, :plan
   attr_accessor :algorithm, :goals
 
   def initialize(algorithm = :breadth_first_forward_search)
@@ -33,12 +33,6 @@ class Planner
     end
   end
 
-  def plan
-    return @plan if @plan == :failure
-
-    @plan.collect { |method| create_sequence_diagram_ready_string(method) }.join('; ')
-  end
-
   private
 
   def randomized_forward_search
@@ -54,7 +48,7 @@ class Planner
 
       method = applicable_methods.sample
       state = execute(state, method)
-      plan << method
+      plan << construct_method_call(method)
     end
   end
 
@@ -73,7 +67,7 @@ class Planner
 
       pi = depth_first_forward_search(s0, called_methods_copy)
       if pi != :failure
-        return pi.unshift(method)
+        return pi.unshift(construct_method_call(method))
       end
     end
 
@@ -87,21 +81,24 @@ class Planner
     queue.push([@initial_state.clone, []])
 
     until queue.empty?
-      state, sequence_of_methods_leading_to_state = queue.shift
+      state, sequence_of_method_calls_leading_to_state = queue.shift
 
       @number_of_states_tested_for_goals += 1
-      return sequence_of_methods_leading_to_state if state.satisfy?(@goals)
+      return sequence_of_method_calls_leading_to_state if
+        state.satisfy?(@goals)
 
       called_methods_names =
-        sequence_of_methods_leading_to_state.collect { |method| method.name }
+        sequence_of_method_calls_leading_to_state.collect { |m| m[:method_name] }
       applicable_methods = find_applicable_methods(state, called_methods_names)
       next if applicable_methods.empty?
 
       applicable_methods.each do |method|
         child_state = execute(state.clone, method)
-        sequence_of_methods_leading_to_child_state =
-          sequence_of_methods_leading_to_state.clone.push(method)
-        queue.push([child_state, sequence_of_methods_leading_to_child_state])
+        method_call = construct_method_call(method)
+        sequence_of_method_calls_leading_to_child_state =
+          sequence_of_method_calls_leading_to_state.clone.push(method_call)
+        queue.push([child_state,
+                   sequence_of_method_calls_leading_to_child_state])
       end
     end
 
@@ -115,22 +112,25 @@ class Planner
     priority_queue.insert(node, f(node))
 
     until priority_queue.empty?
-      state, sequence_of_methods_leading_to_state = priority_queue.delete_min
+      state, sequence_of_method_calls_leading_to_state =
+        priority_queue.delete_min
 
       @number_of_states_tested_for_goals += 1
-      return sequence_of_methods_leading_to_state if state.satisfy?(@goals)
+      return sequence_of_method_calls_leading_to_state if
+        state.satisfy?(@goals)
 
       applicable_methods = find_applicable_methods(state)
       delete_previously_called_methods_that_dont_improve_h(applicable_methods,
-                                                           sequence_of_methods_leading_to_state,
+                                                           sequence_of_method_calls_leading_to_state,
                                                            state)
       next if applicable_methods.empty?
 
       applicable_methods.each do |method|
         child_state = execute(state.clone, method)
-        sequence_of_methods_leading_to_child_state =
-          sequence_of_methods_leading_to_state.clone.push(method)
-        node = [child_state, sequence_of_methods_leading_to_child_state]
+        method_call = construct_method_call(method)
+        sequence_of_method_calls_leading_to_child_state =
+          sequence_of_method_calls_leading_to_state.clone.push(method_call)
+        node = [child_state, sequence_of_method_calls_leading_to_child_state]
         priority_queue.insert(node, f(node))
       end
     end
@@ -145,9 +145,9 @@ class Planner
   end
 
   def g(n)
-    sequence_of_methods_leading_to_state = n.last
+    sequence_of_method_calls_leading_to_state = n.last
 
-    sequence_of_methods_leading_to_state.count
+    sequence_of_method_calls_leading_to_state.count
   end
 
   # The heuristic function
@@ -169,10 +169,10 @@ class Planner
   end
 
   def delete_previously_called_methods_that_dont_improve_h(applicable_methods,
-                                                           sequence_of_methods_leading_to_state,
+                                                           sequence_of_method_calls_leading_to_state,
                                                            state)
     called_methods_names =
-      sequence_of_methods_leading_to_state.collect { |method| method.name }
+      sequence_of_method_calls_leading_to_state.collect { |e| e[:method_name] }
 
     applicable_methods.delete_if do |method|
       child_state = execute(state.clone, method)
@@ -180,6 +180,20 @@ class Planner
       called_methods_names.include?(method.name) &&
         h([child_state, nil]) >= h([state, nil])
     end
+  end
+
+  def construct_method_call(dbc_method)
+    receiver_name = dbc_method.receiver_name
+    parameters_names = dbc_method.parameters.keys
+    candidate_callers = @initial_state.dbc_objects_refering_to(receiver_name)
+    caller_name = if candidate_callers.empty?
+                    '<Actor>'
+                  else
+                    candidate_callers.sample.dbc_name
+                  end
+
+    {caller_name: caller_name, method_name: dbc_method.name, parameters_names:
+      parameters_names, receiver_name: receiver_name}
   end
 
   def execute(state, method)
@@ -192,9 +206,5 @@ class Planner
     called_methods_names.each { |method_name| copy << method_name }
 
     copy
-  end
-
-  def create_sequence_diagram_ready_string(method)
-    "#{method.receiver_name.downcase}.#{method.name}(#{method.parameters.keys.join(', ')})"
   end
 end

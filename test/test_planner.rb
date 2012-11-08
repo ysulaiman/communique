@@ -19,6 +19,8 @@ class TestPlanner < MiniTest::Unit::TestCase
     @deactivate = DbcMethod.new('deactivate')
     @deactivate.precondition = Proc.new { @logged_in && @activated }
     @deactivate.effect = Proc.new { @activated = false }
+
+    @actor_name = '<Actor>'
   end
 
   def test_has_readable_initial_state
@@ -59,7 +61,11 @@ class TestPlanner < MiniTest::Unit::TestCase
     @planner.goals = {'counter' => Proc.new { @value == 43 }}
 
     @planner.solve
-    assert_equal 'counter.change_value_from_42_to_43()', @planner.plan
+
+    assert_equal 1, @planner.plan.length
+    assert_equal @actor_name, @planner.plan.first[:caller_name]
+    assert_equal method.name, @planner.plan.first[:method_name]
+    assert_equal counter_instance.dbc_name, @planner.plan.first[:receiver_name]
   end
 
   def test_solves_trivial_problem_involving_multiple_actions_with_parameters
@@ -84,23 +90,12 @@ class TestPlanner < MiniTest::Unit::TestCase
     @planner.goals = {'user' => Proc.new { @logged_in }}
 
     @planner.solve
-    assert_equal 'user.log_in(username, password)', @planner.plan
-  end
 
-  def test_solves_non_trivial_problem
-    user_instance = DbcObject.new('user', :User, {
-      :@logged_in => false,
-      :@activated => false
-    })
-
-    user_instance.add_dbc_methods(@parameterless_log_in, @log_out, @activate, @deactivate)
-
-    @planner.initial_state.add(user_instance)
-    @planner.goals = {'user' => Proc.new { @activated && !@logged_in }}
-
-    @planner.solve
-    assert_match /user.log_in\(\);.* user.activate\(\);.* user.log_out\(\)/,
-                 @planner.plan
+    assert_equal 1, @planner.plan.length
+    assert_equal @actor_name, @planner.plan.first[:caller_name]
+    assert_equal log_in.name, @planner.plan.first[:method_name]
+    assert_equal log_in.parameters.keys, @planner.plan.first[:parameters_names]
+    assert_equal user_instance.dbc_name, @planner.plan.first[:receiver_name]
   end
 
   def test_solves_non_trivial_problem_deterministically
@@ -109,14 +104,33 @@ class TestPlanner < MiniTest::Unit::TestCase
       :@activated => false
     })
 
-    user_instance.add_dbc_methods(@parameterless_log_in, @log_out, @activate, @deactivate)
+    user_instance.add_dbc_methods(@parameterless_log_in, @log_out, @activate,
+                                  @deactivate)
 
     @planner.initial_state.add(user_instance)
     @planner.goals = {'user' => Proc.new { @activated && !@logged_in }}
-    @planner.algorithm = :depth_first_forward_search
+    @planner.algorithm = :breadth_first_forward_search
 
     @planner.solve
-    assert_equal "user.log_in(); user.activate(); user.log_out()", @planner.plan
+    plan = @planner.plan
+
+    assert_equal 3, plan.length
+
+    first_method_call = plan.first
+    second_method_call = plan[1]
+    third_method_call = plan.last
+
+    assert_equal @actor_name, first_method_call[:caller_name]
+    assert_equal @parameterless_log_in.name, first_method_call[:method_name]
+    assert_equal user_instance.dbc_name, first_method_call[:receiver_name]
+
+    assert_equal @actor_name, second_method_call[:caller_name]
+    assert_equal @activate.name, second_method_call[:method_name]
+    assert_equal user_instance.dbc_name, second_method_call[:receiver_name]
+
+    assert_equal @actor_name, third_method_call[:caller_name]
+    assert_equal @log_out.name, third_method_call[:method_name]
+    assert_equal user_instance.dbc_name, third_method_call[:receiver_name]
   end
 
   def test_finds_shortest_plan_when_using_breadth_first_search
@@ -143,7 +157,10 @@ class TestPlanner < MiniTest::Unit::TestCase
 
     @planner.solve
 
-    assert_equal 'counter.increment_by_3()', @planner.plan
+    assert_equal 1, @planner.plan.length
+    assert_equal @actor_name, @planner.plan.first[:caller_name]
+    assert_equal increment_by_3.name, @planner.plan.first[:method_name]
+    assert_equal counter_instance.dbc_name, @planner.plan.first[:receiver_name]
   end
 
   def test_reduces_number_of_explored_states_when_using_best_first_search
@@ -170,7 +187,11 @@ class TestPlanner < MiniTest::Unit::TestCase
 
     @planner.solve
 
-    assert_equal 'counter.increment_by_3()', @planner.plan
+    assert_equal 1, @planner.plan.length
+    assert_equal @actor_name, @planner.plan.first[:caller_name]
+    assert_equal increment_by_3.name, @planner.plan.first[:method_name]
+    assert_equal counter_instance.dbc_name, @planner.plan.first[:receiver_name]
+
     assert_equal 2, @planner.number_of_states_tested_for_goals
   end
 
@@ -232,8 +253,43 @@ class TestPlanner < MiniTest::Unit::TestCase
     @planner.algorithm = :best_first_forward_search
 
     @planner.solve
+    plan = @planner.plan
 
-    assert_equal 'counter_1.increment_by_1(); counter_2.increment_by_1()',
-      @planner.plan
+    assert_equal 2, plan.length
+
+    first_method_call = plan.first
+    second_method_call = plan.last
+
+    assert_equal @actor_name, first_method_call[:caller_name]
+    assert_equal increment_counter_1_by_1.name, first_method_call[:method_name]
+    assert_equal counter_1_instance.dbc_name, first_method_call[:receiver_name]
+
+    assert_equal @actor_name, second_method_call[:caller_name]
+    assert_equal increment_counter_2_by_1.name,
+      second_method_call[:method_name]
+    assert_equal counter_2_instance.dbc_name,
+      second_method_call[:receiver_name]
+  end
+
+  def test_generates_plans_containing_message_sender_information
+    door_instance = DbcObject.new('door', :Door, {:@is_open => false})
+    room_instance = DbcObject.new('room', :Room, {:@door => door_instance})
+
+    open = DbcMethod.new(:open)
+    open.precondition = Proc.new { !@is_open }
+    open.postcondition = Proc.new { @is_open = true }
+
+    door_instance.add_dbc_methods(open)
+
+    @planner.initial_state.add(door_instance, room_instance)
+    @planner.goals = {'door' => Proc.new { @is_open }}
+    @planner.algorithm = :best_first_forward_search
+
+    @planner.solve
+
+    assert_equal 1, @planner.plan.length
+    assert_equal room_instance.dbc_name, @planner.plan.first[:caller_name]
+    assert_equal open.name, @planner.plan.first[:method_name]
+    assert_equal door_instance.dbc_name, @planner.plan.first[:receiver_name]
   end
 end
