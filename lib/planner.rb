@@ -171,6 +171,9 @@ class Planner
   def delete_previously_called_methods_that_dont_improve_h(applicable_methods,
                                                            sequence_of_method_calls_leading_to_state,
                                                            state)
+    return if applicable_methods.empty? ||
+      sequence_of_method_calls_leading_to_state.empty?
+
     called_methods_names =
       sequence_of_method_calls_leading_to_state.collect { |e| e[:method_name] }
 
