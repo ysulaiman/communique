@@ -35,6 +35,12 @@ class TestDbcMethod < MiniTest::Unit::TestCase
     assert_respond_to @dbc_method, :receiver_name=
   end
 
+  def test_has_accessible_dependencies
+    @dbc_method.dependencies.push :a, :b, :c
+
+    assert_equal [:a, :b, :c], @dbc_method.dependencies
+  end
+
   def test_equals_another_dbc_method_with_equal_name_and_parameters_and_receiver_name
     @dbc_method.receiver_name = 'dbc_object'
     equal_dbc_method = DbcMethod.new('a_method', {x: 13, y: 42})
