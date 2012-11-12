@@ -271,25 +271,43 @@ class TestPlanner < MiniTest::Unit::TestCase
       second_method_call[:receiver_name]
   end
 
-  def test_generates_plans_containing_message_sender_information
-    door_instance = DbcObject.new('door', :Door, {:@is_open => false})
-    room_instance = DbcObject.new('room', :Room, {:@door => door_instance})
+  def test_assumes_the_actor_is_the_caller_for_the_first_method_call
+    receiver = DbcObject.new('receiver', :Receiver, {})
+    incorrect_caller = DbcObject.new('incorrect_caller', :IncorrectCaller, {
+      :@receiver => receiver
+    })
+    @planner.initial_state.add(receiver, incorrect_caller)
 
-    open = DbcMethod.new(:open)
-    open.precondition = Proc.new { !@is_open }
-    open.postcondition = Proc.new { @is_open = true }
+    current_receiver_name = receiver.dbc_name
+    previous_method_calls = []
+    caller_name = @planner.send(:determine_caller_name, current_receiver_name,
+                                previous_method_calls, @planner.initial_state)
 
-    door_instance.add_dbc_methods(open)
+    assert_equal @actor_name, caller_name
+  end
 
-    @planner.initial_state.add(door_instance, room_instance)
-    @planner.goals = {'door' => Proc.new { @is_open }}
-    @planner.algorithm = :best_first_forward_search
+  def test_selects_the_most_recently_activated_candidate_caller_if_there_are_more_than_one
+    receiver = DbcObject.new('receiver', :Receiver, {})
+    correct_caller = DbcObject.new('correct_caller', :CorrectCaller, {
+      :@receiver => receiver
+    })
+    incorrect_caller = DbcObject.new('incorrect_caller', :IncorrectCaller, {
+      :@receiver => receiver
+    })
 
-    @planner.solve
+    @planner.initial_state.add(receiver, correct_caller, incorrect_caller)
 
-    assert_equal 1, @planner.plan.length
-    assert_equal room_instance.dbc_name, @planner.plan.first[:caller_name]
-    assert_equal open.name, @planner.plan.first[:method_name]
-    assert_equal door_instance.dbc_name, @planner.plan.first[:receiver_name]
+    current_receiver_name = receiver.dbc_name
+    previous_method_calls = [
+      {caller_name: '<Actor>', method_name: :m_1,
+        receiver_name: incorrect_caller.dbc_name},
+      {caller_name: '<Actor>', method_name: :m_2,
+        receiver_name: correct_caller.dbc_name},
+    ]
+
+    caller_name = @planner.send(:determine_caller_name, current_receiver_name,
+                                previous_method_calls, @planner.initial_state)
+
+    assert_equal correct_caller.dbc_name, caller_name
   end
 end

@@ -48,7 +48,7 @@ class Planner
 
       method = applicable_methods.sample
       state = execute(state, method)
-      plan << construct_method_call(method)
+      plan << construct_method_call(method, plan, state)
     end
   end
 
@@ -67,7 +67,7 @@ class Planner
 
       pi = depth_first_forward_search(s0, called_methods_copy)
       if pi != :failure
-        return pi.unshift(construct_method_call(method))
+        return pi.unshift(construct_method_call(method, pi, state))
       end
     end
 
@@ -94,7 +94,7 @@ class Planner
 
       applicable_methods.each do |method|
         child_state = execute(state.clone, method)
-        method_call = construct_method_call(method)
+        method_call = construct_method_call(method, sequence_of_method_calls_leading_to_state, state)
         sequence_of_method_calls_leading_to_child_state =
           sequence_of_method_calls_leading_to_state.clone.push(method_call)
         queue.push([child_state,
@@ -119,7 +119,9 @@ class Planner
       return sequence_of_method_calls_leading_to_state if
         state.satisfy?(@goals)
 
+
       applicable_methods = find_applicable_methods(state)
+
       delete_previously_called_methods_that_dont_improve_h(applicable_methods,
                                                            sequence_of_method_calls_leading_to_state,
                                                            state)
@@ -127,7 +129,7 @@ class Planner
 
       applicable_methods.each do |method|
         child_state = execute(state.clone, method)
-        method_call = construct_method_call(method)
+        method_call = construct_method_call(method, sequence_of_method_calls_leading_to_state, state)
         sequence_of_method_calls_leading_to_child_state =
           sequence_of_method_calls_leading_to_state.clone.push(method_call)
         node = [child_state, sequence_of_method_calls_leading_to_child_state]
@@ -185,18 +187,59 @@ class Planner
     end
   end
 
-  def construct_method_call(dbc_method)
+  def construct_method_call(dbc_method, previous_method_calls, current_state)
     receiver_name = dbc_method.receiver_name
     parameters_names = dbc_method.parameters.keys
-    candidate_callers = @initial_state.dbc_objects_refering_to(receiver_name)
-    caller_name = if candidate_callers.empty?
+    caller_name = if previous_method_calls.empty?
+                    # Assume that the actor always makes the first method call.
                     '<Actor>'
                   else
-                    candidate_callers.sample.dbc_name
+                    determine_caller_name(receiver_name, previous_method_calls,
+                                          current_state)
                   end
 
     {caller_name: caller_name, method_name: dbc_method.name, parameters_names:
       parameters_names, receiver_name: receiver_name}
+  end
+
+  def determine_caller_name(current_receiver_name, previous_method_calls, current_state)
+    candidate_callers =
+      current_state.dbc_objects_refering_to(current_receiver_name)
+
+    # If a candidate caller doesn't have an active method on its lifeline (i.e.
+    # no method was called on it), it can't actually be the caller.
+    discard_inactive_candidate_callers(candidate_callers,
+                                       previous_method_calls)
+
+    if candidate_callers.empty?
+      # If there are no active candidate callers, assume that the actor makes
+      # the call.
+      '<Actor>'
+    elsif candidate_callers.size == 1
+      candidate_callers.first.dbc_name
+    else
+      name_of_most_recently_activated_candidate_caller(candidate_callers,
+                                                       previous_method_calls)
+    end
+  end
+
+  def discard_inactive_candidate_callers(candidate_callers,
+                                         previous_method_calls)
+    candidate_callers.delete_if do |candidate_caller|
+      previous_method_calls.none? do |method_call|
+        method_call[:receiver_name] == candidate_caller.dbc_name
+      end
+    end
+  end
+
+  def name_of_most_recently_activated_candidate_caller(candidate_callers,
+                                                       previous_method_calls)
+    candidate_callers_names = candidate_callers.collect { |c| c.dbc_name }
+    relevant_method_calls = previous_method_calls.select do |mc|
+      candidate_callers_names.include?(mc[:receiver_name])
+    end
+
+    relevant_method_calls.last[:receiver_name]
   end
 
   def execute(state, method)
