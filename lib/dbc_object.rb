@@ -1,6 +1,8 @@
 class DbcObject
-  attr_accessor :state
+  attr_accessor :dead, :state
   attr_reader :dbc_name, :dbc_class, :dbc_methods, :dbc_instance_variables
+
+  alias_method :dead?, :dead
 
   def initialize(dbc_name, dbc_class, dbc_instance_variables)
     @dbc_name = dbc_name
@@ -12,6 +14,8 @@ class DbcObject
   end
 
   def satisfy?(&condition)
+    return false if @dead
+
     instance_eval(&condition)
   end
 
@@ -35,12 +39,14 @@ class DbcObject
 
     other.dbc_name == @dbc_name && other.dbc_class == @dbc_class &&
       has_equal_dbc_instance_variables?(other) &&
-      other.dbc_methods == @dbc_methods
+      other.dbc_methods == @dbc_methods && other.dead? == @dead
   end
 
   def clone
     copy = DbcObject.new(@dbc_name.clone, @dbc_class,
                          @dbc_instance_variables.clone)
+
+    copy.dead = @dead
 
     @dbc_instance_variables.each_key do |key|
       begin

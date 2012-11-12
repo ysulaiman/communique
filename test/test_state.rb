@@ -50,6 +50,14 @@ class TestState < MiniTest::Unit::TestCase
     })
   end
 
+  def test_does_not_satisfy_conditions_of_its_dbc_objects_that_are_explicitly_marked_as_dead
+    @account_instance.dead = true
+
+    assert_equal false, @state.satisfy?({
+      'account_instance' => Proc.new { @number == 42 }
+    })
+  end
+
   def test_can_be_asked_how_many_of_its_objects_do_not_satisfy_their_conditions
     @state.add(@foo_instance)
 
