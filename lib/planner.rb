@@ -217,6 +217,17 @@ class Planner
   end
 
   def determine_caller_name(current_receiver_name, previous_method_calls, current_state)
+    # If the receiver is a dependency object (i.e. `<<create>>` was sent to it
+    # at a previous point in time), assume that its creator is the only object
+    # that can call its methods.
+    relevant_create_method_call = previous_method_calls.find do |mc|
+      mc[:method_name] == '<<create>>' &&
+        mc[:receiver_name] == current_receiver_name
+    end
+    if relevant_create_method_call
+      return relevant_create_method_call[:caller_name]
+    end
+
     candidate_callers =
       current_state.dbc_objects_refering_to(current_receiver_name)
 

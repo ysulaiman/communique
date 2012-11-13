@@ -369,9 +369,7 @@ class TestPlanner < MiniTest::Unit::TestCase
     assert_equal '<<create>>', second_method_call[:method_name]
     assert_equal planner.dbc_name, second_method_call[:receiver_name]
 
-    assert_equal @actor_name, third_method_call[:caller_name]
-    # TODO: Use dependency relationships to select the correct caller, which
-    # should be sequence_diagram_generator.
+    assert_equal sequence_diagram_generator.dbc_name, third_method_call[:caller_name]
     assert_equal solve.name, third_method_call[:method_name]
     assert_equal planner.dbc_name, third_method_call[:receiver_name]
   end
