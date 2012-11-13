@@ -62,11 +62,21 @@ class Planner
     applicable_methods.each do |method|
       s0 = execute(state.clone, method)
 
+      # Use dependency relationships (if any) to make the needed <<create>>
+      # method calls.
+      create_method_call = nil
+      method.dependencies.each do |dependency|
+        s0.get_instance_named(dependency).dead = false
+        create_method_call = {caller_name: method.receiver_name, method_name:
+          '<<create>>', receiver_name: dependency}
+      end
+
       called_methods_copy = copy_called_methods_names(called_methods_names)
       called_methods_copy << method.name
 
       pi = depth_first_forward_search(s0, called_methods_copy)
       if pi != :failure
+        pi.unshift(create_method_call) if create_method_call
         return pi.unshift(construct_method_call(method, pi, state))
       end
     end
@@ -97,6 +107,7 @@ class Planner
         method_call = construct_method_call(method, sequence_of_method_calls_leading_to_state, state)
         sequence_of_method_calls_leading_to_child_state =
           sequence_of_method_calls_leading_to_state.clone.push(method_call)
+        make_needed_create_method_calls(method, child_state, sequence_of_method_calls_leading_to_child_state)
         queue.push([child_state,
                    sequence_of_method_calls_leading_to_child_state])
       end
@@ -106,6 +117,8 @@ class Planner
     :failure
   end
 
+  # TODO: DRY up breadth- and best-first search methods since they are high on
+  # code duplication.
   def best_first_forward_search
     priority_queue = Depq.new
     node = [@initial_state.clone, []]
@@ -132,6 +145,7 @@ class Planner
         method_call = construct_method_call(method, sequence_of_method_calls_leading_to_state, state)
         sequence_of_method_calls_leading_to_child_state =
           sequence_of_method_calls_leading_to_state.clone.push(method_call)
+        make_needed_create_method_calls(method, child_state, sequence_of_method_calls_leading_to_child_state)
         node = [child_state, sequence_of_method_calls_leading_to_child_state]
         priority_queue.insert(node, f(node))
       end
@@ -240,6 +254,17 @@ class Planner
     end
 
     relevant_method_calls.last[:receiver_name]
+  end
+
+  def make_needed_create_method_calls(method, child_state, sequence_of_method_calls_leading_to_child_state)
+    method.dependencies.each do |dependency|
+      child_state.get_instance_named(dependency).dead = false
+      sequence_of_method_calls_leading_to_child_state.push({
+        caller_name: method.receiver_name,
+        method_name: '<<create>>',
+        receiver_name: dependency
+      })
+    end
   end
 
   def execute(state, method)

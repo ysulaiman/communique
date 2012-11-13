@@ -310,4 +310,69 @@ class TestPlanner < MiniTest::Unit::TestCase
 
     assert_equal correct_caller.dbc_name, caller_name
   end
+
+  def test_regards_methods_of_dbc_objects_that_are_marked_as_dead_as_inapplicable
+    object = DbcObject.new('object', :Class, {})
+    object.dead = true
+
+    method = DbcMethod.new(:m)
+    method.precondition = Proc.new { true }
+    method.postcondition = Proc.new {}
+    object.add_dbc_methods(method)
+
+    @planner.initial_state.add(object)
+    @planner.instance_variable_set(:@dbc_methods, [method])
+
+    applicable_methods = @planner.send(:find_applicable_methods,
+                                       @planner.initial_state)
+    assert_empty applicable_methods
+  end
+
+  def test_uses_dependency_relationships_to_instantiate_needed_objects
+    sequence_diagram_generator = DbcObject.new('sequence_diagram_generator',
+                                               :SequenceDiagramGenerator, {})
+    planner = DbcObject.new('planner', :Planner, {:@is_done_solving => false})
+    planner.dead = true
+
+    generate = DbcMethod.new(:generate)
+    generate.precondition = Proc.new { true }
+    generate.postcondition = Proc.new {}
+    generate.dependencies.push(planner.dbc_name)
+    sequence_diagram_generator.add_dbc_methods(generate)
+
+    solve = DbcMethod.new(:solve)
+    solve.precondition = Proc.new { true }
+    solve.postcondition = Proc.new { @is_done_solving = true }
+    planner.add_dbc_methods(solve)
+
+    @planner.initial_state.add(sequence_diagram_generator, planner)
+    @planner.goals = {'planner' => Proc.new { @is_done_solving }}
+    @planner.algorithm = :best_first_forward_search
+
+    @planner.solve
+    plan = @planner.plan
+
+    refute_equal :failure, plan
+    assert_equal 3, plan.length
+
+    first_method_call = plan.first
+    second_method_call = plan[1]
+    third_method_call = plan.last
+
+    assert_equal @actor_name, first_method_call[:caller_name]
+    assert_equal generate.name, first_method_call[:method_name]
+    assert_equal sequence_diagram_generator.dbc_name,
+      first_method_call[:receiver_name]
+
+    assert_equal sequence_diagram_generator.dbc_name,
+      second_method_call[:caller_name]
+    assert_equal '<<create>>', second_method_call[:method_name]
+    assert_equal planner.dbc_name, second_method_call[:receiver_name]
+
+    assert_equal @actor_name, third_method_call[:caller_name]
+    # TODO: Use dependency relationships to select the correct caller, which
+    # should be sequence_diagram_generator.
+    assert_equal solve.name, third_method_call[:method_name]
+    assert_equal planner.dbc_name, third_method_call[:receiver_name]
+  end
 end
