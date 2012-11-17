@@ -24,23 +24,16 @@ user_profile_instance = DbcObject.new('user_profile', :UserProfile, {
 })
 
 log_in = DbcMethod.new(:log_in)
-log_in.precondition = Proc.new do
-  @dbc_class == :UserProfile &&
-    !@is_logged_in
-end
+log_in.precondition = Proc.new { !@is_logged_in }
 log_in.postcondition = Proc.new { @is_logged_in = true }
 
 log_out = DbcMethod.new(:log_out)
-log_out.precondition = Proc.new do
-  @dbc_class == :UserProfile &&
-    @is_logged_in
-end
+log_out.precondition = Proc.new { @is_logged_in }
 log_out.postcondition = Proc.new { @is_logged_in = false }
 
 update_user_notifications = DbcMethod.new(:update_user_notifications)
 update_user_notifications.precondition = Proc.new do
-  @dbc_class == :UserProfile &&
-    ! state.get_instance_of(:Notification).nil? &&
+  ! state.get_instance_of(:Notification).nil? &&
     # TODO: Using the following condition instead:
     #! state.get_instance_of(:Notification).meeting.nil? &&
     # fixes the order of user_profile.update_user_notifications() and
@@ -59,8 +52,7 @@ user_profile_instance.add_dbc_methods(log_in, log_out,
 
 add_notification = DbcMethod.new(:add_notification)
 add_notification.precondition = Proc.new do
-  @dbc_class == :Notification &&
-    ! state.get_instance_of(:Meeting).nil? &&
+  ! state.get_instance_of(:Meeting).nil? &&
     state.get_instance_of(:Meeting).vote.is_closed
 end
 add_notification.postcondition = Proc.new do
@@ -71,8 +63,7 @@ notification_instance.add_dbc_methods(add_notification)
 
 close_vote = DbcMethod.new(:close_vote)
 close_vote.precondition = Proc.new do
-  @dbc_class == :Vote &&
-    ! @is_closed &&
+  ! @is_closed &&
     state.get_instance_of(:Meeting).is_final_meeting_time_set &&
     state.get_instance_of(:Meeting).is_final_meeting_location_set
 end

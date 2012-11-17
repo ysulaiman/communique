@@ -10,17 +10,11 @@ account_instance = DbcObject.new('account', :Account, {
 })
 
 log_in = DbcMethod.new('log_in')
-log_in.precondition = Proc.new do
-  @dbc_class == :Account &&
-    !@is_logged_in
-end
+log_in.precondition = Proc.new { !@is_logged_in }
 log_in.postcondition = Proc.new { @is_logged_in = true }
 
 log_out = DbcMethod.new('log_out')
-log_out.precondition = Proc.new do
-  @dbc_class == :Account &&
-    @is_logged_in
-end
+log_out.precondition = Proc.new { @is_logged_in }
 log_out.postcondition = Proc.new { @is_logged_in = false }
 
 account_instance.add_dbc_methods(log_in, log_out)
@@ -37,19 +31,12 @@ property_instance = DbcObject.new('property', :Property, {
 })
 
 show_properties = DbcMethod.new('show_properties')
-show_properties.precondition = Proc.new do
-  @dbc_class == :Property &&
-    @account.is_logged_in &&
-    !@deleted
-end
+show_properties.precondition = Proc.new { @account.is_logged_in && !@deleted }
 show_properties.postcondition = Proc.new { @properties_are_listed = true }
 
 modify_property = DbcMethod.new('modify_property')
 modify_property.precondition = Proc.new do
-  @dbc_class == :Property &&
-    @account.is_logged_in &&
-    @properties_are_listed &&
-    !@deleted
+  @account.is_logged_in && @properties_are_listed && !@deleted
 end
 modify_property.postcondition = Proc.new do
   @is_modified = true
@@ -58,28 +45,19 @@ end
 
 select_featured_property = DbcMethod.new('select_featured_property')
 select_featured_property.precondition = Proc.new do
-  @dbc_class == :Property &&
-    @account.is_logged_in &&
-    !@is_featured &&
-    !@deleted
+  @account.is_logged_in && !@is_featured && !@deleted
 end
 select_featured_property.postcondition = Proc.new { @is_featured = true }
 
 unselect_featured_property = DbcMethod.new('unselect_featured_property')
 unselect_featured_property.precondition = Proc.new do
-  @dbc_class == :Property &&
-    @account.is_logged_in &&
-    @is_featured &&
-    !@deleted
+  @account.is_logged_in && @is_featured && !@deleted
 end
 unselect_featured_property.postcondition = Proc.new { @is_featured = false }
 
 delete_property = DbcMethod.new('delete_property')
 delete_property.precondition = Proc.new do
-  @dbc_class == :Property &&
-    @account.is_logged_in &&
-    @properties_are_listed &&
-    !@deleted
+  @account.is_logged_in && @properties_are_listed && !@deleted
 end
 delete_property.postcondition = Proc.new do
   @deleted = true
@@ -87,10 +65,7 @@ delete_property.postcondition = Proc.new do
 end
 
 add_property = DbcMethod.new('add_property')
-add_property.precondition = Proc.new do
-  @dbc_class == :Property &&
-    @account.is_logged_in
-end
+add_property.precondition = Proc.new { @account.is_logged_in }
 # TODO: Real postcondition for adding a property?
 add_property.postcondition = Proc.new do
   @is_added = true
@@ -111,17 +86,12 @@ announcement_instance = DbcObject.new('announcement', :Announcement, {
 })
 
 show_announcements = DbcMethod.new('show_announcements')
-show_announcements.precondition = Proc.new do
-  @dbc_class == :Announcement &&
-    @account.is_logged_in
-end
+show_announcements.precondition = Proc.new { @account.is_logged_in }
 show_announcements.postcondition = Proc.new { @announcements_are_listed = true }
 
 modify_announcement = DbcMethod.new('modify_announcement')
 modify_announcement.precondition = Proc.new do
-  @dbc_class == :Announcement &&
-    @account.is_logged_in &&
-    @announcements_are_listed
+  @account.is_logged_in && @announcements_are_listed
 end
 modify_announcement.postcondition = Proc.new do
   @is_modified = true
