@@ -2,13 +2,7 @@
 # methods that do not contribute to solving the planning problem at hand and
 # the (execution) time taken by the planner to solve the problem.
 
-require 'benchmark'
-
-require_relative '../lib/dbc_method'
-require_relative '../lib/dbc_object'
-require_relative '../lib/dbc_use_case'
-require_relative '../lib/noise_generator'
-require_relative '../lib/planner'
+require_relative 'experiment_helpers'
 
 notification_instance = DbcObject.new('notification', :Notification, {
   :@meeting => nil
