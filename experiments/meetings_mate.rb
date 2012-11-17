@@ -4,8 +4,6 @@
 
 require 'benchmark'
 
-# TODO: If this experiment set-up will remain identical to the MeetingsMate
-# example set-up, DRY them up.
 require_relative '../lib/dbc_method'
 require_relative '../lib/dbc_object'
 require_relative '../lib/dbc_use_case'
