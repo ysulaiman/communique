@@ -19,9 +19,15 @@ class State
   end
 
   def number_of_objects_not_satisfying_their_conditions(conditions)
-    conditions.count do |object_name, condition_block|
-      ! object_satisfy?(object_name, &condition_block)
+    names_of_objects_not_satisfying_their_conditions(conditions).count
+  end
+
+  def names_of_objects_not_satisfying_their_conditions(conditions)
+    unsatisfied_condition_pairs = conditions.select do |object_name, condition|
+      ! object_satisfy?(object_name, &condition)
     end
+
+    unsatisfied_condition_pairs.keys
   end
 
   def apply(dbc_object_name, &effect)

@@ -76,6 +76,27 @@ class TestState < MiniTest::Unit::TestCase
     })
   end
 
+  def test_can_report_names_of_its_dbc_objects_that_do_not_satisfy_their_conditions
+    @state.add(@foo_instance)
+
+    assert_equal [], @state.names_of_objects_not_satisfying_their_conditions({
+      'account_instance' => Proc.new { @number == 42 },
+      'foo_instance' => Proc.new { @foo == 'foo' }
+    })
+
+    assert_equal [@account_instance.dbc_name],
+      @state.names_of_objects_not_satisfying_their_conditions({
+        'account_instance' => Proc.new { @number == 666 },
+        'foo_instance' => Proc.new { @foo == 'foo' }
+      })
+
+    assert_equal [@account_instance.dbc_name, @foo_instance.dbc_name],
+      @state.names_of_objects_not_satisfying_their_conditions({
+        'account_instance' => Proc.new { @number == 666 },
+        'foo_instance' => Proc.new { @foo == 'bar' }
+      })
+  end
+
   def test_can_apply_postconditions_to_one_of_its_dbc_objects
     @state.apply('account_instance') do
       @number = 666
