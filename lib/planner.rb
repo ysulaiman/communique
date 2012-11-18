@@ -4,7 +4,8 @@ require 'depq'
 require_relative 'state'
 
 class Planner
-  attr_reader :initial_state, :number_of_states_tested_for_goals, :plan
+  attr_reader :initial_state, :number_of_states_tested_for_goals, :plan,
+    :unsatisfied_objects_names
   attr_accessor :algorithm, :goals
 
   def initialize(algorithm = :breadth_first_forward_search)
@@ -90,6 +91,8 @@ class Planner
     queue = []
     queue.push([@initial_state.clone, []])
 
+    # TODO: Keep track of best state seen so far?
+
     until queue.empty?
       state, sequence_of_method_calls_leading_to_state = queue.shift
 
@@ -124,6 +127,8 @@ class Planner
     node = [@initial_state.clone, []]
     priority_queue.insert(node, f(node))
 
+    best_state_seen_so_far = @initial_state
+
     until priority_queue.empty?
       state, sequence_of_method_calls_leading_to_state =
         priority_queue.delete_min
@@ -132,6 +137,11 @@ class Planner
       return sequence_of_method_calls_leading_to_state if
         state.satisfy?(@goals)
 
+      # The best state is the one closest to a goal state. That is, the state
+      # that minimzes h(n) (the number of objects not satisfying their
+      # conditions) as much as possible.
+      best_state_seen_so_far = state if
+        h(Array(state)) < h(Array(best_state_seen_so_far))
 
       applicable_methods = find_applicable_methods(state)
 
@@ -152,6 +162,10 @@ class Planner
     end
 
     # All states were explored and none of them was a goal state.
+
+    @unsatisfied_objects_names =
+      best_state_seen_so_far.names_of_objects_not_satisfying_their_conditions(@goals)
+
     :failure
   end
 

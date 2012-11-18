@@ -230,6 +230,34 @@ class TestPlanner < MiniTest::Unit::TestCase
     assert_equal :failure, @planner.plan
   end
 
+  def test_can_report_names_of_unsatisfied_objects_upon_failure
+    a = DbcObject.new('a', :A, {:@is_satisfied => false})
+    b = DbcObject.new('b', :B, {:@is_satisfied => false})
+    c = DbcObject.new('c', :C, {:@is_satisfied => false})
+
+    satisfy_a = DbcMethod.new(:satisfy_a)
+    satisfy_a.precondition = Proc.new { true }
+    satisfy_a.postcondition = Proc.new { @is_satisfied = true }
+    a.add_dbc_methods(satisfy_a)
+
+    satisfy_b = DbcMethod.new(:satisfy_b)
+    satisfy_b.precondition = Proc.new { true }
+    satisfy_b.postcondition = Proc.new { @is_satisfied = true }
+    b.add_dbc_methods(satisfy_b)
+
+    @planner.initial_state.add(a, b, c)
+    @planner.goals = {
+      'a' => Proc.new { @is_satisfied },
+      'b' => Proc.new { @is_satisfied },
+      'c' => Proc.new { @is_satisfied }
+    }
+    @planner.algorithm = :best_first_forward_search
+
+    @planner.solve
+    assert_equal :failure, @planner.plan
+    assert_equal [c.dbc_name], @planner.unsatisfied_objects_names
+  end
+
   def test_best_first_allows_multiple_same_name_messages_if_each_improves_h
     counter_1_instance = DbcObject.new('counter_1', :Counter, {:@value => 0})
     counter_2_instance = DbcObject.new('counter_2', :Counter, {:@value => 0})
