@@ -1,4 +1,6 @@
 require 'benchmark'
+require 'rubygems'
+require 'text-table'
 
 require_relative '../lib/dbc_method'
 require_relative '../lib/dbc_object'
@@ -13,6 +15,12 @@ def solve_and_report(use_case)
 
   puts "Solving UC #{use_case.name} ..."
   planner.solve
-  puts "Solution: #{planner.plan}"
+  puts "Solution: ", prettify_plan(planner.plan)
   puts "# Goal Tests: #{planner.number_of_states_tested_for_goals}\n\n"
+end
+
+def prettify_plan(raw_plan, header = nil)
+  return raw_plan if raw_plan == :failure
+
+  ([header] + raw_plan.map { |e| e.values }).to_table(first_row_is_head: true)
 end
