@@ -155,6 +155,36 @@ class TestState < MiniTest::Unit::TestCase
     assert new_host.equal?(new_state.get_instance_of(:Meeting).host)
   end
 
+  def test_correctly_clones_its_dbc_objects_that_have_circular_references
+    display = DbcObject.new('display', :Display, {
+      :@watch => nil
+    })
+    time = DbcObject.new('time', :Time, {
+      :@watch => nil
+    })
+    watch = DbcObject.new('watch', :Watch, {
+      :@display => display,
+      :@time => time
+    })
+    display.watch = watch
+    time.watch = watch
+
+    state = State.new('state', [display, time, watch])
+
+    new_state = state.clone
+    new_watch = new_state.get_instance_named('watch')
+    new_display = new_state.get_instance_named('display')
+    new_time = new_state.get_instance_named('time')
+
+    assert new_display.equal?(new_watch.display)
+    assert new_time.equal?(new_watch.time)
+
+    assert new_watch.equal?(new_display.watch)
+    assert new_watch.equal?(new_time.watch)
+    assert new_watch.equal?(new_state.get_instance_of(:Display).watch)
+    assert new_watch.equal?(new_state.get_instance_of(:Time).watch)
+  end
+
   def test_copies_its_current_dbc_objects
     @state.apply('account_instance') do
       @number = 666

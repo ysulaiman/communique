@@ -63,19 +63,35 @@ class State
         clone_object = object.clone
         clone_state.add(clone_object)
 
-        sub_dbc_objects = clone_object.dbc_instance_variables.select do |k, v|
-          v.is_a?(DbcObject)
+        sub_dbc_objects = Hash.new
+        object.dbc_instance_variables.keys.each do |key|
+          sub_dbc_object = object.instance_variable_get(key)
+          if sub_dbc_object.is_a?(DbcObject)
+            sub_dbc_objects[key] = sub_dbc_object
+          end
         end
 
         sub_dbc_objects.each do |key, sub_object|
-          existing_clone_sub_object =
-            clone_state.get_instance_named(sub_object.dbc_name)
-          if existing_clone_sub_object
-            clone_object.instance_variable_set(key, existing_clone_sub_object)
-          else
-            clone_value = sub_object.clone
-            clone_state.add(clone_value)
-            clone_object.instance_variable_set(key, clone_value)
+          # Clone the sub-object unless it was already cloned before.
+          unless clone_sub_object = clone_state.get_instance_named(sub_object.dbc_name)
+            clone_sub_object = sub_object.clone
+            clone_state.add(clone_sub_object)
+          end
+          # Make the clone of object point to the clone of sub-object in the
+          # cloned state.
+          clone_object.instance_variable_set(key, clone_sub_object)
+
+          # If the sub-object pointed back to object in original state, make
+          # the clone of sub-object point to the clone of object in the cloned
+          # state.
+          backlinks = sub_object.dbc_instance_variables.keys.find_all do |k|
+            pointed_to_object = sub_object.instance_variable_get(k)
+
+            pointed_to_object && pointed_to_object.equal?(object)
+          end
+
+          backlinks.each do |backlink|
+            clone_sub_object.instance_variable_set(backlink, clone_object)
           end
         end
       end
