@@ -1,7 +1,8 @@
 class DbcObject
-  attr_accessor :dead, :state
+  attr_accessor :boundary_object, :dead, :state
   attr_reader :dbc_name, :dbc_class, :dbc_methods, :dbc_instance_variables
 
+  alias_method :boundary_object?, :boundary_object
   alias_method :dead?, :dead
 
   def initialize(dbc_name, dbc_class, dbc_instance_variables)
@@ -11,6 +12,8 @@ class DbcObject
     @dbc_instance_variables = dbc_instance_variables
     initialize_dbc_instance_variables
     define_singleton_attribute_accessors(@dbc_instance_variables.keys)
+    @boundary_object = false
+    @dead = false
   end
 
   def satisfy?(&condition)
@@ -46,6 +49,7 @@ class DbcObject
     copy = DbcObject.new(@dbc_name.clone, @dbc_class,
                          @dbc_instance_variables.clone)
 
+    copy.boundary_object = @boundary_object
     copy.dead = @dead
 
     @dbc_instance_variables.each_key do |key|

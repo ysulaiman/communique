@@ -189,6 +189,14 @@ class TestDbcObject < MiniTest::Unit::TestCase
     assert_equal true, @dbc_object.dead?
   end
 
+  def test_has_accessible_boundary_object_attribute_that_is_not_true_by_default
+    refute @dbc_object.boundary_object?
+
+    @dbc_object.boundary_object = true
+
+    assert_equal true, @dbc_object.boundary_object?
+  end
+
   def test_does_not_satisfy_any_conditions_if_it_is_explicitly_marked_as_dead
     assert_equal true, @dbc_object.satisfy? { @number == 42 }
 
