@@ -314,6 +314,25 @@ class TestPlanner < MiniTest::Unit::TestCase
     assert_equal @actor_name, caller_name
   end
 
+  def test_assumes_only_the_actor_can_call_methods_on_boundary_objects
+    receiver = DbcObject.new('receiver', :Receiver, {})
+    receiver.boundary_object = true
+
+    incorrect_caller = DbcObject.new('incorrect_caller', :IncorrectCaller, {
+      :@receiver => receiver
+    })
+
+    @planner.initial_state.add(receiver, incorrect_caller)
+
+    current_receiver_name = receiver.dbc_name
+    previous_method_calls = [{caller_name: :some_caller, method_name:
+      :some_method, receiver_name: incorrect_caller.dbc_name}]
+    caller_name = @planner.send(:determine_caller_name, current_receiver_name,
+                                previous_method_calls, @planner.initial_state)
+
+    assert_equal @actor_name, caller_name
+  end
+
   def test_selects_the_most_recently_activated_candidate_caller_if_there_are_more_than_one
     receiver = DbcObject.new('receiver', :Receiver, {})
     correct_caller = DbcObject.new('correct_caller', :CorrectCaller, {

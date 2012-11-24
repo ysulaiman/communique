@@ -231,6 +231,10 @@ class Planner
   end
 
   def determine_caller_name(current_receiver_name, previous_method_calls, current_state)
+    # Assume that only the actor can call methods on boundary objects.
+    return '<Actor>' if
+      current_state.get_instance_named(current_receiver_name).boundary_object?
+
     # If the receiver is a dependency object (i.e. `<<create>>` was sent to it
     # at a previous point in time), assume that its creator is the only object
     # that can call its methods.
