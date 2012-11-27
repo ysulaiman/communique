@@ -1,6 +1,11 @@
 # The purpose of this experiment is to study the relation between the number of
-# methods that do not contribute to solving the planning problem at hand and
-# the (execution) time taken by the planner to solve the problem.
+# methods that do not contribute to solving the problem at hand and the
+# performance of the planner in terms of the number of explored nodes and the
+# (execution) time taken by the planner to solve the problem.
+#
+# The use case and classes/objects used in this experiment are taken from the
+# MeetingsMate senior project by Iyad Al Akel, Abdurrahman Al Kalaji, Loai
+# Labani, Fahad Al Hazemi, Aseel Ba Haziq, and Hani Al Zahrani.
 
 require_relative 'experiment_helpers'
 
