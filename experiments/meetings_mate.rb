@@ -5,7 +5,8 @@
 require_relative 'experiment_helpers'
 
 notification_instance = DbcObject.new('notification', :Notification, {
-  :@meeting => nil
+  :@meeting => nil,
+  :@user_profile => nil
 })
 
 vote_instance = DbcObject.new('vote', :Vote, {
@@ -15,12 +16,14 @@ vote_instance = DbcObject.new('vote', :Vote, {
 meeting_instance = DbcObject.new('meeting', :Meeting, {
   :@is_final_meeting_time_set => false,
   :@is_final_meeting_location_set => false,
-  :@vote => vote_instance
+  :@vote => vote_instance,
+  :@notification => notification_instance
 })
 
 user_profile_instance = DbcObject.new('user_profile', :UserProfile, {
   :@is_logged_in => true,
-  :@notifications => []
+  :@notifications => [],
+  :@meeting => meeting_instance
 })
 
 log_in = DbcMethod.new(:log_in)
@@ -33,15 +36,9 @@ log_out.postcondition = Proc.new { @is_logged_in = false }
 
 update_user_notifications = DbcMethod.new(:update_user_notifications)
 update_user_notifications.precondition = Proc.new do
-  ! state.get_instance_of(:Notification).nil? &&
-    # TODO: Using the following condition instead:
-    #! state.get_instance_of(:Notification).meeting.nil? &&
-    # fixes the order of user_profile.update_user_notifications() and
-    # notification.add_notification(), but the planner seems to insist on
-    # calling notification.add_notification() a second time at the end of the
-    # plan. Why?
-    state.get_instance_of(:Meeting).is_final_meeting_time_set &&
-    state.get_instance_of(:Meeting).is_final_meeting_location_set
+  state.get_instance_of(:Notification).meeting &&
+    @meeting.is_final_meeting_time_set &&
+    @meeting.is_final_meeting_location_set
 end
 update_user_notifications.postcondition = Proc.new do
   @notifications << state.get_instance_of(:Notification)
@@ -52,11 +49,12 @@ user_profile_instance.add_dbc_methods(log_in, log_out,
 
 add_notification = DbcMethod.new(:add_notification)
 add_notification.precondition = Proc.new do
-  ! state.get_instance_of(:Meeting).nil? &&
+  state.get_instance_of(:Meeting) &&
     state.get_instance_of(:Meeting).vote.is_closed
 end
 add_notification.postcondition = Proc.new do
   @meeting = state.get_instance_of(:Meeting)
+  @user_profile = state.get_instance_of(:UserProfile)
 end
 
 notification_instance.add_dbc_methods(add_notification)
@@ -72,7 +70,7 @@ close_vote.postcondition = Proc.new { @is_closed = true }
 vote_instance.add_dbc_methods(close_vote)
 
 set_final_meeting_location = DbcMethod.new(:set_final_meeting_location)
-set_final_meeting_location.precondition = Proc.new { true }
+set_final_meeting_location.precondition = Proc.new { @is_final_meeting_time_set }
 set_final_meeting_location.postcondition = Proc.new do
   @is_final_meeting_location_set = true
 end
@@ -94,7 +92,7 @@ finalize_meeting_use_case.postconditions = {
     @is_final_meeting_location_set },
   'vote' => Proc.new { @is_closed },
   'notification' => Proc.new { ! @meeting.nil? },
-  'user_profile' => Proc.new { @notifications.include? notification_instance }
+  'user_profile' => Proc.new { @notifications.include? state.get_instance_named('notification') }
 }
 
 
