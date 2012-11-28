@@ -23,15 +23,11 @@ class Planner
     @dbc_methods = @initial_state.get_dbc_methods_of_instances
 
     @plan = case @algorithm
-    when :randomized_forward_search
-      randomized_forward_search
-    when :depth_first_forward_search
-      depth_first_forward_search(@initial_state, [])
-    when :breadth_first_forward_search
-      breadth_first_forward_search
-    when :best_first_forward_search
-      best_first_forward_search
-    end
+            when :randomized_forward_search
+              randomized_forward_search
+            else
+              forward_search
+            end
   end
 
   private
@@ -53,76 +49,7 @@ class Planner
     end
   end
 
-  def depth_first_forward_search(state, called_methods_names)
-    @number_of_states_tested_for_goals += 1
-    return [] if state.satisfy?(@goals)
-
-    applicable_methods = find_applicable_methods(state, called_methods_names)
-    return :failure if applicable_methods.empty?
-
-    applicable_methods.each do |method|
-      s0 = execute(state.clone, method)
-
-      # Use dependency relationships (if any) to make the needed <<create>>
-      # method calls.
-      create_method_call = nil
-      method.dependencies.each do |dependency|
-        s0.get_instance_named(dependency).dead = false
-        create_method_call = {caller_name: method.receiver_name, method_name:
-          '<<create>>', receiver_name: dependency}
-      end
-
-      called_methods_copy = copy_called_methods_names(called_methods_names)
-      called_methods_copy << method.name
-
-      pi = depth_first_forward_search(s0, called_methods_copy)
-      if pi != :failure
-        pi.unshift(create_method_call) if create_method_call
-        return pi.unshift(construct_method_call(method, pi, state))
-      end
-    end
-
-    # Non of the applicable methods eventually lead to a goal state, so this
-    # state is a dead end.
-    :failure
-  end
-
-  def breadth_first_forward_search
-    queue = []
-    queue.push([@initial_state.clone, []])
-
-    # TODO: Keep track of best state seen so far?
-
-    until queue.empty?
-      state, sequence_of_method_calls_leading_to_state = queue.shift
-
-      @number_of_states_tested_for_goals += 1
-      return sequence_of_method_calls_leading_to_state if
-        state.satisfy?(@goals)
-
-      called_methods_names =
-        sequence_of_method_calls_leading_to_state.collect { |m| m[:method_name] }
-      applicable_methods = find_applicable_methods(state, called_methods_names)
-      next if applicable_methods.empty?
-
-      applicable_methods.each do |method|
-        child_state = execute(state.clone, method)
-        method_call = construct_method_call(method, sequence_of_method_calls_leading_to_state, state)
-        sequence_of_method_calls_leading_to_child_state =
-          sequence_of_method_calls_leading_to_state.clone.push(method_call)
-        make_needed_create_method_calls(method, child_state, sequence_of_method_calls_leading_to_child_state)
-        queue.push([child_state,
-                   sequence_of_method_calls_leading_to_child_state])
-      end
-    end
-
-    # All states were explored and none of them was a goal state.
-    :failure
-  end
-
-  # TODO: DRY up breadth- and best-first search methods since they are high on
-  # code duplication.
-  def best_first_forward_search
+  def forward_search
     priority_queue = Depq.new
     node = [@initial_state.clone, []]
     priority_queue.insert(node, f(node))
@@ -171,7 +98,17 @@ class Planner
 
   # The evaluation, or objective, function
   def f(n)
-    g(n) + h(n)
+    if @algorithm == :depth_first_forward_search
+      # Because a min priority queue is used, returning -g(n) will give deeper
+      # nodes higher priority. DFS doesn't use heuristic functions.
+      -g(n)
+    elsif @algorithm == :breadth_first_forward_search
+      # For the same reason, returning g(n) will give shallower nodes higher
+      # priority. BFS doesn't use heuristic functions either.
+      g(n)
+    else
+      g(n) + h(n)
+    end
   end
 
   def g(n)
