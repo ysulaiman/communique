@@ -91,7 +91,6 @@ finalize_meeting_use_case.postconditions = {
   'user_profile' => Proc.new { @notifications.include? state.get_instance_named('notification') }
 }
 
-
 (0..10).each do |number_of_noise_methods|
   dummy_dbc_instance = DbcObject.new('dummy_object', :DummyClass, {})
 
@@ -99,9 +98,9 @@ finalize_meeting_use_case.postconditions = {
     NoiseGenerator.generate_dbc_methods(number_of_noise_methods)
   dummy_dbc_instance.add_dbc_methods(*noise_dbc_methods)
 
-  finalize_meeting_use_case.dbc_instances.delete_at(-1) unless
+  finalize_meeting_use_case.dbc_instances.delete_at(0) unless
     number_of_noise_methods == 0
-  finalize_meeting_use_case.dbc_instances << dummy_dbc_instance
+  finalize_meeting_use_case.dbc_instances.unshift(dummy_dbc_instance)
 
   planner = Planner.new
   planner.set_up_initial_state(finalize_meeting_use_case)
