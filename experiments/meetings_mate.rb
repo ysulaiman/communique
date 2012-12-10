@@ -31,14 +31,6 @@ user_profile_instance = DbcObject.new('user_profile', :UserProfile, {
   :@meeting => meeting_instance
 })
 
-log_in = DbcMethod.new(:log_in)
-log_in.precondition = Proc.new { !@is_logged_in }
-log_in.postcondition = Proc.new { @is_logged_in = true }
-
-log_out = DbcMethod.new(:log_out)
-log_out.precondition = Proc.new { @is_logged_in }
-log_out.postcondition = Proc.new { @is_logged_in = false }
-
 update_user_notifications = DbcMethod.new(:update_user_notifications)
 update_user_notifications.precondition = Proc.new do
   state.get_instance_of(:Notification).meeting &&
@@ -49,8 +41,7 @@ update_user_notifications.postcondition = Proc.new do
   @notifications << state.get_instance_of(:Notification)
 end
 
-user_profile_instance.add_dbc_methods(log_in, log_out,
-                                      update_user_notifications)
+user_profile_instance.add_dbc_methods(update_user_notifications)
 
 add_notification = DbcMethod.new(:add_notification)
 add_notification.precondition = Proc.new do
