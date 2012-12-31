@@ -2,12 +2,9 @@ Communiqué is a library for planning messages in sequence diagrams written in
 Ruby.
 
 It resulted from the research I did for my Computer Science MS Thesis, which is
-titled *Planning Messages in Sequence Diagrams and Analyzing the Consistency of
-Use Cases and Class Diagrams Automatically using Design by Contract*.
-
-The title is a mouthful, but the basic idea is simple: under the right
-conditions, generating [UML sequence diagrams][sd] is essentially a planning
-problem in disguise.
+titled *Planning-Based Approach for Automating Sequence Diagram Generation*.
+The basic idea is simple: under the right conditions, generating [UML sequence
+diagrams][sd] is essentially a planning problem in disguise.
 
 The "right conditions" are when [use cases][uc] and [class diagrams][cd] are
 developed using the [Design by Contract][dbc] approach. When that is the case,
