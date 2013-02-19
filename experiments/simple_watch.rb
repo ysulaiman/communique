@@ -17,7 +17,8 @@ display = DbcObject.new('display', :TwoBWatchDisplay, {
 time = DbcObject.new('time', :TwoBWatchTime, {
   :@is_minutes_incremented => false,
   :@is_new_time_committed => false,
-  :@watch => nil
+  :@watch => nil,
+  :@display => display # A necessary association (missing from the book's CD) if `time` is to send `refresh()` to display.
 })
 
 watch = DbcObject.new('watch', :TwoBWatchInput, {
