@@ -53,6 +53,19 @@ class State
     @dbc_objects.values.collect { |object| object.dbc_methods }.flatten
   end
 
+  def ==(other)
+    return true if other.equal?(self)
+    return false unless other.instance_of?(self.class)
+
+    # To enable the underlaying DbcObject#== method handle circular references
+    # correctly, and since I'm pressed for time, I'm using a global variable
+    # that DbcObject#== will use as a memory of the DbcObjects compared (or
+    # being compared) for equality.
+    $dbc_objects_names_compared_for_equality = []
+
+    other.instance_variable_get(:@dbc_objects) == @dbc_objects
+  end
+
   def clone
     clone_state = State.new(@name.clone)
 

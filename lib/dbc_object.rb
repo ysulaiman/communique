@@ -100,12 +100,64 @@ class DbcObject
   end
 
   def has_equal_dbc_instance_variables?(other)
-    @dbc_instance_variables.all? do |key, value|
+    # Initialize the global memory of DbcObjects compared for equality
+    # if it was not initialized by State#==. This variable is used to be
+    # able to avoid getting stuck in a cycle in the presence of circular
+    # references when comparing States for equality.
+    $dbc_objects_names_compared_for_equality ||= []
+
+    # DbcObject instance variables need special treatment when comparing
+    # them for equality to avoid getting stuck on a cycle in the
+    # presence of circular references.
+    has_equal_non_dbc_object_instance_variables?(other) &&
+      has_equal_dbc_object_instance_variables?(other)
+  end
+
+  def has_equal_non_dbc_object_instance_variables?(other)
+    self_non_dbc_object_instance_variables = @dbc_instance_variables.reject do |k, v|
+      self.instance_variable_get(k).is_a?(DbcObject)
+    end
+
+    other_non_dbc_object_instance_variables = other.dbc_instance_variables.reject do |k, v|
+      other.instance_variable_get(k).is_a?(DbcObject)
+    end
+
+    self_non_dbc_object_instance_variables.all? do |key, value|
       other.instance_variable_defined?(key) &&
         other.instance_variable_get(key) == self.instance_variable_get(key)
-    end && other.dbc_instance_variables.all? do |key, value|
+    end && other_non_dbc_object_instance_variables.all? do |key, value|
       self.instance_variable_defined?(key) &&
         self.instance_variable_get(key) == other.instance_variable_get(key)
+    end
+  end
+
+  def has_equal_dbc_object_instance_variables?(other)
+    self_dbc_object_instance_variables = @dbc_instance_variables.select do |k, v|
+      self.instance_variable_get(k).is_a?(DbcObject)
+    end
+
+    other_dbc_object_instance_variables = other.dbc_instance_variables.select do |k, v|
+      other.instance_variable_get(k).is_a?(DbcObject)
+    end
+
+    self_dbc_object_instance_variables.all? do |key, value|
+      dbc_name = self.instance_variable_get(key).dbc_name
+      if $dbc_objects_names_compared_for_equality.include?(dbc_name)
+        true
+      else
+        $dbc_objects_names_compared_for_equality << dbc_name
+        other.instance_variable_defined?(key) &&
+          other.instance_variable_get(key) == self.instance_variable_get(key)
+      end
+    end && other_dbc_object_instance_variables.all? do |key, value|
+      dbc_name = other.instance_variable_get(key).dbc_name
+      if $dbc_objects_names_compared_for_equality.include?(dbc_name)
+        true
+      else
+        $dbc_objects_names_compared_for_equality << dbc_name
+        self.instance_variable_defined?(key) &&
+          self.instance_variable_get(key) == other.instance_variable_get(key)
+      end
     end
   end
 end

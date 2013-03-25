@@ -145,6 +145,35 @@ class TestDbcObject < MiniTest::Unit::TestCase
     refute_equal @foo_instance, foo_instance_with_different_dbc_methods
   end
 
+  def test_does_not_equal_another_dbc_objec_with_different_sub_dbc_object
+    bar_instance = DbcObject.new(:bar, :Bar, {:@bar => :bar})
+    foo_instance_referencing_bar_instance =
+      DbcObject.new(:foo, :Foo, {:@foo => :foo, :@sub => bar_instance})
+
+    baz_instance = DbcObject.new(:baz, :Baz, {:@baz => :baz})
+    foo_instance_referencing_baz_instance =
+      DbcObject.new(:foo, :Foo, {:@foo => :foo, :@sub => baz_instance})
+
+    refute_equal foo_instance_referencing_bar_instance,
+                 foo_instance_referencing_baz_instance,
+                 'If parent DbcObjects reference unequal child ones, the parent DbcObjects are not equal'
+  end
+
+  def test_equality_method_does_not_blow_up_the_stack_if_there_are_circular_references
+    foo1 = DbcObject.new(:foo, :Foo, {:@bar => nil})
+    bar1 = DbcObject.new(:bar, :Bar, {:@foo => nil})
+    foo1.bar = bar1
+    bar1.foo = foo1
+
+    foo2 = DbcObject.new(:foo, :Foo, {:@bar => nil})
+    bar2 = DbcObject.new(:bar, :Bar, {:@foo => nil})
+    foo2.bar = bar2
+    bar2.foo = foo2
+
+    assert_equal foo1, foo2
+    assert_equal bar1, bar2
+  end
+
   def test_can_be_deep_copied
     new_dbc_object = @dbc_object.clone
 

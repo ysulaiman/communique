@@ -225,4 +225,54 @@ class TestState < MiniTest::Unit::TestCase
     assert_equal [correct_room_instance],
                  @state.dbc_objects_refering_to('door')
   end
+
+  def test_equals_another_state_if_they_are_both_empty
+    empty_state_1 = State.new(:s1, [])
+    empty_state_2 = State.new(:s2, [])
+
+    assert_equal empty_state_1, empty_state_2
+  end
+
+  def test_does_not_equal_another_state_if_only_one_is_empty
+    empty_state = State.new(:s1, [])
+
+    refute_equal @state, empty_state
+  end
+
+  def test_equals_another_state_if_they_contain_equal_dbc_objects
+    state_1 = State.new(:s1, [DbcObject.new(:foo, :Foo, {:@foo => :foo})])
+    state_2 = State.new(:s2, [DbcObject.new(:foo, :Foo, {:@foo => :foo})])
+
+    assert_equal state_1, state_2
+  end
+
+  def test_does_not_equal_another_state_if_they_contain_unequal_dbc_objects
+    state = State.new(:s1, [DbcObject.new(:foo, :Foo, {:@foo => :foo})])
+    state_with_different_dbc_object_name =
+      State.new(:s2, [DbcObject.new(:bar, :Foo, {:@foo => :foo})])
+    state_with_different_dbc_instance_variable_name =
+      State.new(:s3, [DbcObject.new(:foo, :Foo, {:@bar => :foo})])
+    state_with_different_dbc_instance_variable_value =
+      State.new(:s4, [DbcObject.new(:foo, :Foo, {:@foo => :bar})])
+
+    refute_equal state, state_with_different_dbc_object_name
+    refute_equal state, state_with_different_dbc_instance_variable_name
+    refute_equal state, state_with_different_dbc_instance_variable_value
+  end
+
+  def test_can_handle_circular_references_when_testing_for_equality
+    foo1 = DbcObject.new(:foo, :Foo, {:@bar => nil})
+    bar1 = DbcObject.new(:bar, :Bar, {:@foo => nil})
+    foo1.bar = bar1
+    bar1.foo = foo1
+    state_1 = State.new(:state_1, [foo1, bar1])
+
+    foo2 = DbcObject.new(:foo, :Foo, {:@bar => nil})
+    bar2 = DbcObject.new(:bar, :Bar, {:@foo => nil})
+    foo2.bar = bar2
+    bar2.foo = foo2
+    state_2 = State.new(:state_2, [foo2, bar2])
+
+    assert_equal state_1, state_2
+  end
 end
