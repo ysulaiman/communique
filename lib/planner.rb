@@ -18,9 +18,11 @@ class Planner
     @initial_state.add(*use_case.dbc_instances)
   end
 
-  def solve
+  def solve(options={})
     @number_of_states_tested_for_goals = 0
     @dbc_methods = @initial_state.get_dbc_methods_of_instances
+
+    @dbc_methods.shuffle!(random: options[:random]) if options[:random]
 
     @plan = case @algorithm
             when :randomized_forward_search
