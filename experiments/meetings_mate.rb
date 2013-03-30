@@ -91,28 +91,48 @@ finalize_meeting_use_case.postconditions = {
   'user_profile' => Proc.new { @notifications.include? state.get_instance_named('notification') }
 }
 
-(0..10).each do |number_of_noise_methods|
-  dummy_dbc_instance = DbcObject.new('dummy_object', :DummyClass, {})
+ALGORITHM = :best_first_forward_search
+puts "Using #{ALGORITHM}"
 
-  noise_dbc_methods =
-    NoiseGenerator.generate_dbc_methods(number_of_noise_methods)
-  dummy_dbc_instance.add_dbc_methods(*noise_dbc_methods)
+File.open("#{Time.now.to_i}_#{ALGORITHM}", "w") do |file|
+  header = %w( NoiseMethods UserTime SystemTime ChildrenUserTime ChildrenSystemTime RealTime GoalTests PlanLength )
+  file.puts header.join(',')
 
-  finalize_meeting_use_case.dbc_instances.delete_at(0) unless
-    number_of_noise_methods == 0
-  finalize_meeting_use_case.dbc_instances.unshift(dummy_dbc_instance)
+  (0..10).each do |number_of_noise_methods|
+    print "#{number_of_noise_methods} Noise Methods:"
 
-  planner = Planner.new
-  planner.set_up_initial_state(finalize_meeting_use_case)
-  planner.goals = finalize_meeting_use_case.postconditions
-  planner.algorithm = :best_first_forward_search
+    dummy_dbc_instance = DbcObject.new('dummy_object', :DummyClass, {})
 
-  # TODO: Consider using Benchmark#bmbm to minimize the effect of garbage
-  # collection on later runs.
-  Benchmark.bm(11) do |x|
-    x.report("#{number_of_noise_methods} methods:") { planner.solve }
-    puts "# Goal Tests: #{planner.number_of_states_tested_for_goals}"
-    puts planner.plan
-    # TODO: Write the results to a file.
+    noise_dbc_methods =
+      NoiseGenerator.generate_dbc_methods(number_of_noise_methods)
+    dummy_dbc_instance.add_dbc_methods(*noise_dbc_methods)
+
+    finalize_meeting_use_case.dbc_instances.delete_at(0) unless
+      number_of_noise_methods == 0
+    finalize_meeting_use_case.dbc_instances.unshift(dummy_dbc_instance)
+
+    planner = Planner.new
+    planner.set_up_initial_state(finalize_meeting_use_case)
+    planner.goals = finalize_meeting_use_case.postconditions
+    planner.algorithm = ALGORITHM
+
+    # Initialize the pseudo-random number generator that will be used in the
+    # shuffling loop with a fixed seed to make the results reproducible and
+    # to generate the same sequence of search spaces for the search algorithms.
+    prng = Random.new(42)
+
+    30.times do
+      data_row = Benchmark.measure { planner.solve(random: prng) }.to_a
+
+      data_row.delete_at(0)  # Remove the unneeded empty "label" element.
+      data_row.unshift(number_of_noise_methods)
+      data_row << planner.number_of_states_tested_for_goals << planner.plan.length
+
+      file.puts data_row.join(',')
+
+      print '.'
+    end
+
+    puts
   end
 end
